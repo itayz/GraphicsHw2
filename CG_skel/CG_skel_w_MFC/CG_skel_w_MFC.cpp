@@ -1,0 +1,606 @@
+// CG_skel_w_MFC.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include "CG_skel_w_MFC.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+enum MENU_ITEMS {
+	FILE_OPEN = 1, MAIN_DEMO = 1, MAIN_ABOUT = 2, MAIN_FNORMALS,
+	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
+	ADD_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
+	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
+	CHANGE_MODULE,REMOVE_MODULE
+
+
+
+};
+
+
+
+// The one and only application object
+#include "GL/glew.h"
+#include "GL/freeglut.h"
+#include "GL/freeglut_ext.h"
+#include "vec.h"
+#include "mat.h"
+#include "InitShader.h"
+#include "Scene.h"
+#include "Renderer.h"
+#include <string>
+#include "PrimMeshModel.h"
+#include "InputDialog.h"
+#define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
+
+
+Scene *scene;
+Renderer *renderer;
+
+int last_x, last_y;
+bool lb_down, rb_down, mb_down,control_module=false;
+float rotate_step_size, translate_step_size, scale_up_step_size, scale_down_step_size;
+float translate_camera_step_size = 0.5;
+float step_scale = 1; 
+AXES axis = ALL_AXES;
+FRAMES frame = MODEL;
+
+//----------------------------------------------------------------------------
+// Callbacks
+
+void display(void)
+{
+	//Call the scene and ask it to draw itself
+	scene->draw(*renderer);
+}
+
+void reshape(int width, int height)
+{
+	//update the renderer's buffers	
+	renderer->UpdateScreenSize(width, height);
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+	switch (key) {
+	case 033:
+		exit(EXIT_SUCCESS);
+		break;
+	case '+':
+		if (control_module)
+		{
+			if (axis == ALL_AXES) {
+			scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_up_step_size);
+			scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_up_step_size);
+			scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_up_step_size);
+			}
+			else {
+				scene->transformActiveModel(frame, SCALE, axis, scale_up_step_size);
+			}
+			scene->draw(*renderer);
+		}
+		break;
+	case '-':
+		if (control_module)
+		{
+			if (axis == ALL_AXES) {
+			scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_down_step_size);
+			scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_down_step_size);
+			scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_down_step_size);
+			}
+			else {
+				scene->transformActiveModel(frame, SCALE, axis, scale_down_step_size);
+			}
+			scene->draw(*renderer);
+		}
+		break;
+	case 'f':
+		scene->focusCameraOnActiveModel();
+		scene->draw(*renderer);
+		break;
+	case 'g':
+		scene->toggleXZGrid();
+		scene->draw(*renderer);
+		break;
+	case 'm':
+		scene->changeActiveModel();
+		scene->draw(*renderer);
+		break;
+	case 'c':
+		scene->changeActiveCamera();
+		renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		scene->draw(*renderer);
+		break;
+	case 'a':
+		axis = ALL_AXES;
+		break;
+	case 'x':
+		axis = X_AXIS;
+		break;
+	case 'y':
+		axis = Y_AXIS;
+		break;
+	case 'z':
+		axis = Z_AXIS;
+		break;
+	}
+}
+
+void specialFunc(int key, int x, int y)
+{
+	switch (key) {
+	case GLUT_KEY_LEFT:
+		if (control_module)
+		{
+
+			scene->transformActiveModel(WORLD, TRANSLATE, X_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
+		else
+		{
+			scene->translateCameraInRightDirection(-translate_camera_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	case GLUT_KEY_RIGHT:
+		if (control_module)
+		{
+			scene->transformActiveModel(WORLD, TRANSLATE, X_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
+		else
+		{
+			scene->translateCameraInRightDirection(translate_camera_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	case GLUT_KEY_DOWN:
+		if (control_module)
+		{
+			scene->transformActiveModel(WORLD, TRANSLATE, Z_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
+		else {
+			scene->translateCameraInFocusDirection(-translate_camera_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	case GLUT_KEY_UP:
+		if (control_module)
+		{
+			scene->transformActiveModel(WORLD, TRANSLATE, Z_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
+		else
+		{
+			scene->translateCameraInFocusDirection(translate_camera_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	case GLUT_KEY_PAGE_DOWN:
+		if (control_module)
+		{
+			scene->transformActiveModel(WORLD, TRANSLATE, Y_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	case GLUT_KEY_PAGE_UP:
+		if (control_module)
+		{
+			scene->transformActiveModel(WORLD, TRANSLATE, Y_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
+		break;
+	}
+}
+
+void mouseWheel(int button, int dir, int x, int y)
+{
+	if (dir > 0)
+	{
+		scene->changeCameraZoom(ZOOM_IN);
+	}
+	else
+	{
+		scene->changeCameraZoom(ZOOM_OUT);
+	}
+	scene->draw(*renderer);
+	return;
+}
+
+void mouse(int button, int state, int x, int y)
+{
+	//button = {GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, GLUT_RIGHT_BUTTON}
+	//state = {GLUT_DOWN,GLUT_UP}
+
+	//set down flags
+	switch (button) {
+	case GLUT_LEFT_BUTTON:
+		lb_down = (state == GLUT_UP) ? 0 : 1;
+		break;
+	case GLUT_RIGHT_BUTTON:
+		rb_down = (state == GLUT_UP) ? 0 : 1;
+		break;
+	case GLUT_MIDDLE_BUTTON:
+		mb_down = (state == GLUT_UP) ? 0 : 1;
+		break;
+	}
+
+	// add your code
+}
+
+void motion(int x, int y)
+{
+	// calc difference in mouse movement
+	int dx = (x - last_x);
+	int dy = (y - last_y);
+	// update last x,y
+	last_x = x;
+	last_y = y;
+
+	bool change = false;
+	if (lb_down) { //left mouse button
+		if (dx != 0) {
+			if (control_module) //module control mode.
+			{
+				if (abs(dx) < 30) // continuous movement condition
+				{
+					scene->getActiveModel()->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u)) 
+						* scene->getActiveModel()->_world_transform;					
+					change = true;
+				}
+			}
+			else //camera control
+			{
+				if (abs(dx) < 40) // continuous movement condition
+				{
+					scene->changeCameraAngles(0, -0.5 * dx*rotate_step_size);
+					change = true;
+
+				}
+			}
+		}
+		if (dy != 0) {
+			if (control_module)
+			{
+				if (abs(dy) < 30) // continuous movement condition
+				{
+					scene->getActiveModel()->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
+						*scene->getActiveModel()->_world_transform;
+					change = true;
+				}
+			}
+			else
+			{
+				if (abs(dy) < 40) //continuous movement condition
+				{
+					scene->changeCameraAngles(0.5 * dy*rotate_step_size, 0);
+					change = true;
+				}
+			}
+		}
+	}
+	if (mb_down) { //middle mouse button
+		if (dx != 0) {
+			if (control_module)
+			{
+				if (abs(dx) < 30) // continuous movement condition
+				{
+					if (axis == ALL_AXES) {
+						scene->transformActiveModel(frame, ROTATE, Y_AXIS, dx * rotate_step_size);
+				}
+					else {
+						scene->transformActiveModel(frame, ROTATE, axis, dx * rotate_step_size);
+			}
+					change = true;
+				}
+			}
+		}
+		if (control_module)
+		{
+			if (abs(dy) < 30 && axis == ALL_AXES) // continuous movement condition
+				{
+				scene->transformActiveModel(frame, ROTATE, X_AXIS, -dy * rotate_step_size);
+				change = true;
+				}
+			}
+
+	}
+
+	if (change) {
+		scene->draw(*renderer);
+	}
+}
+
+void fileMenu(int id)
+{
+	CFileDialog dlg(TRUE, _T(".obj"), NULL, NULL, _T("*.obj|*.*"));
+	switch (id)
+	{
+	case FILE_OPEN:
+		if (dlg.DoModal() == IDOK)
+		{
+			std::string s((LPCTSTR)dlg.GetPathName());
+			scene->loadOBJModel((LPCTSTR)dlg.GetPathName());
+			scene->draw(*renderer);
+		}
+		break;
+	case CONTROL_MODULE:
+		control_module = true;
+		break;
+	case CONTROL_CAMERA:
+		control_module = false;
+		break;
+	case WORLD_FRAME:
+		frame = WORLD;
+		break;
+	case MODEL_FRAME:
+		frame = MODEL;
+		break;
+	case CHANGE_MODULE:
+		scene->changeActiveModel();
+		break;
+	case REMOVE_MODULE:
+		scene->removeModel();
+		break;
+	}
+}
+
+void mainMenu(int id)
+{
+	switch (id)
+	{
+	case MAIN_ABOUT:
+		AfxMessageBox(_T("Computer Graphics HW1 \n Ben Levy \n Itay Zuker \n Intuitive control:\n Mouse+Arrow keys+ +/-"));
+		break;
+	}
+}
+void displayMenu(int id)
+{
+	switch (id)
+	{
+	case MAIN_FNORMALS:
+		renderer->draw_triangle_normals = !renderer->draw_triangle_normals;
+		break;
+	case MAIN_VNORMALS:
+		renderer->draw_vertex_normals = !renderer->draw_vertex_normals;
+		break;
+	case MAIN_BOUNDING_BOX:
+		renderer->draw_bounding_box = !renderer->draw_bounding_box;
+		break;
+	case MAIN_CAMERAS:
+		scene->showOrHideCameras();
+	}
+	scene->draw(*renderer);
+}
+void addMenu(int id)
+{
+	PrimMeshModel* PRIMITIVE = new PrimMeshModel();
+	switch (id)
+	{
+	case PRIMITIVE_PYRAMID:
+		scene->addModel(PRIMITIVE); //add to scene
+		scene->draw(*renderer);
+		break;
+	case WORLD_GRID:
+		scene->toggleXZGrid();
+		scene->draw(*renderer);
+		break;
+	}
+
+
+
+
+}
+
+inline vector<GLfloat> split_str(string& input,string &delimiter)
+{
+	vector<GLfloat> output;
+	for (string::size_type p0 = 0, p1 = input.find(',');
+		p1 != string::npos || p0 != string::npos; //null indice
+		(p0 = (p1 == string::npos) ? p1 : ++p1), p1 = input.find(delimiter, p0))
+	{
+		output.push_back(strtod(input.c_str() + p0, NULL));
+	}
+			
+	return output;
+}
+
+void cameraMenu(int id)
+{
+	Camera* c;
+	CCmdDialog  dlg;
+	
+	switch (id)
+	{
+	case ADD_CAMERA:
+		c = new Camera();
+		scene->addCamera(c); //add to scene
+		scene->draw(*renderer);
+		break;
+	case REMOVE_CAMERA:
+		scene->removeCamera();
+		scene->draw(*renderer);
+		break;
+	case ORTHO:
+		dlg.ctext = "Ortho view Input= left,right,bottom,top,zNear,zFar";
+		if (dlg.DoModal() == IDOK) {
+			string command = dlg.GetCmd();
+			string delimiter = ",";
+			vector<GLfloat> o=split_str(command, delimiter);
+			scene->changeCameraZoom(ZOOM_RESET);
+			scene->getActiveCamera()->Ortho(o[0], o[1], o[2], o[3], o[4], o[5]); //update camera with command.
+			renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		}
+		scene->draw(*renderer);
+		break;
+	case FRUSTRUM:
+		dlg.ctext = "Frustum view Input= left,right,bottom,top,zNear,zFar";
+		if (dlg.DoModal() == IDOK) {
+			string command = dlg.GetCmd();
+			string delimiter = ",";
+			vector<GLfloat> o = split_str(command, delimiter);
+			scene->changeCameraZoom(ZOOM_RESET);
+			scene->getActiveCamera()->Frustum(o[0], o[1], o[2], o[3], o[4], o[5]); //update camera with command.
+			renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		}
+		scene->draw(*renderer);
+		break;
+	case PERSPECTIVE:
+		dlg.ctext = "Perspective view Input= fovy[dd],aspect[w/h],zNear,zFar";
+		if (dlg.DoModal() == IDOK) {
+			string command = dlg.GetCmd();
+			string delimiter = ",";
+			vector<GLfloat> o = split_str(command, delimiter);
+			scene->changeCameraZoom(ZOOM_RESET);
+			scene->getActiveCamera()->Perspective(o[0], o[1], o[2], o[3]); //update camera with command.
+			renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		}
+		scene->draw(*renderer);
+		break;
+	}
+
+}
+
+void parametersMenu(int id)
+{
+	CCmdDialog  dlg;
+	switch (id)
+	{
+	case STEP_SCALE:
+		dlg.ctext = "Set transformation step size. default 1";
+		if (dlg.DoModal() == IDOK) {
+			string command = dlg.GetCmd();
+			string delimiter = ",";
+			vector<GLfloat> o = split_str(command, delimiter);
+			step_scale = o[0];
+			rotate_step_size = 1 * step_scale;
+			translate_step_size = 1 * step_scale;
+			scale_up_step_size = 1.1*step_scale;
+			scale_down_step_size = 1 / scale_up_step_size;
+		}
+		break;
+
+	}
+
+}
+
+void initMenu()
+{
+	int menuFile = glutCreateMenu(fileMenu);
+	glutAddMenuEntry("Open module", FILE_OPEN);
+	glutAddMenuEntry("Control active module", CONTROL_MODULE);
+	glutAddMenuEntry("Control active camera", CONTROL_CAMERA);
+	glutAddMenuEntry("Change active module (m)", CHANGE_MODULE);
+	glutAddMenuEntry("Remove active module", REMOVE_MODULE);
+	glutAddMenuEntry("Transform in model frame", MODEL_FRAME);
+	glutAddMenuEntry("Transform in world frame", WORLD_FRAME);
+	int mMenu = glutCreateMenu(mainMenu);
+	glutAddSubMenu("Module", menuFile);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	int dispMenu = glutCreateMenu(displayMenu);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Display", dispMenu);
+	glutSetMenu(dispMenu);
+	glutAddMenuEntry("Face Normals", MAIN_FNORMALS);
+	glutAddMenuEntry("Vertex Normals", MAIN_VNORMALS);
+	glutAddMenuEntry("Bounding Box", MAIN_BOUNDING_BOX);
+	glutAddMenuEntry("Show or Hide Cameras (c)", MAIN_CAMERAS);
+	int aMenu = glutCreateMenu(addMenu);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Primitives", aMenu);
+	glutSetMenu(aMenu);
+	glutAddMenuEntry("Pyramid", PRIMITIVE_PYRAMID);
+	glutAddMenuEntry("World Grid (g)",WORLD_GRID );
+	int cMenu = glutCreateMenu(cameraMenu);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Cameras", cMenu);
+	glutSetMenu(cMenu);
+	glutAddMenuEntry("Add", ADD_CAMERA);
+	glutAddMenuEntry("Remove", REMOVE_CAMERA);
+	glutAddMenuEntry("Ortho", ORTHO);
+	glutAddMenuEntry("Frustum", FRUSTRUM);
+	glutAddMenuEntry("Perspective", PERSPECTIVE);
+	int pMenu = glutCreateMenu(parametersMenu);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Parameters", pMenu);
+	glutAddMenuEntry("About", MAIN_ABOUT);
+	glutSetMenu(pMenu);
+	glutAddMenuEntry("Transformations Step scale", STEP_SCALE);
+
+}
+//----------------------------------------------------------------------------
+
+
+
+int my_main(int argc, char **argv)
+{
+	//----------------------------------------------------------------------------
+	// Initialize window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutInitWindowSize(512, 512);
+	glutInitContextVersion(3, 2);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
+	glutCreateWindow("Hw1- CG");
+	glewExperimental = GL_TRUE;
+	glewInit();
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		/* Problem: glewInit failed, something is seriously wrong. */
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		/*		...*/
+	}
+	fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+
+
+	rotate_step_size = 1;
+	translate_step_size = 1;
+	scale_up_step_size = 1.1;
+	scale_down_step_size = 1 / 1.1;
+	renderer = new Renderer(512, 512);
+	scene = new Scene(renderer);
+	scene->toggleXZGrid();
+	renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+	//----------------------------------------------------------------------------
+	// Initialize Callbacks
+
+	glutDisplayFunc(display);
+	glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
+	glutReshapeFunc(reshape);
+	glutMouseWheelFunc(mouseWheel);
+	glutSpecialFunc(specialFunc);
+	initMenu();
+
+	glutMainLoop();
+	delete scene;
+	delete renderer;
+	return 0;
+}
+
+CWinApp theApp;
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+	int nRetCode = 0;
+	// initialize MFC and print and error on failure
+	if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
+	{
+		// TODO: change error code to suit your needs
+		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
+		nRetCode = 1;
+	}
+	else
+	{
+		my_main(argc, argv);
+	}
+
+	return nRetCode;
+}
