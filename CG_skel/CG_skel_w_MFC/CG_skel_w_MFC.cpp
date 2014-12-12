@@ -593,11 +593,11 @@ void parametersMenu(int id)
 
 void lightMenu(int id)
 {
-	LightSource* l;
+	Light* l;
 	switch (id)
 	{
 	case (ADD_LIGHT) :
-		l = new LightSource();
+		l = new Light();
 		scene->addLightSource(l); //add to scene
 		scene->draw(*renderer);
 		break;

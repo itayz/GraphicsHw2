@@ -1,5 +1,4 @@
 #pragma once
-#include "Renderer.h"
 #include "mat.h"
 
 struct LightSource
@@ -18,12 +17,4 @@ struct LightSource
 	float constantAttenuation; // K0
 	float linearAttenuation;   // K1
 	float quadraticAttenuation;// K2
-
-	vector<vec3> model;
-	LIGHT_SOURCE_TYPE source_type;
-
-	LightSource(LIGHT_SOURCE_TYPE source_type = POINT_LIGHT);
-	vec4 GetPoisition();
-	void Draw(Renderer& renderer);
-	~LightSource();
 };

@@ -239,9 +239,9 @@ void Renderer::UpdateScreenSize(int width, int height)
 	AdjustToCameraAspectRatio(this->camera_aspect_ratio);
 }
 
-void Renderer::SetLightSources(const vector<LightSource*>* light_sources)
+void Renderer::SetLightSources(const vector<LightSource>* light_sources)
 {
-	lightSources = vector<LightSource*>(*light_sources);
+	lightSources = vector<LightSource>(*light_sources);
 }
 
 inline bool IsInsideNDC(const vec4& p) {
@@ -261,7 +261,7 @@ void Renderer::ClearDepthBuffer() {
 }
 
 void Renderer::DrawTriangles(const vector<vec3>* vertices,
-	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color)
+	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, SHADING_TYPES shading_type)
 {
 	ScanLines scanLines(m_height);
 	// Build the transform matrix

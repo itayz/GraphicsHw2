@@ -50,7 +50,7 @@ class Renderer
 	mat4 ndcToScreen;
 	mat4 oTransform;
 	mat3 nTransform;
-	vector<LightSource*> lightSources;
+	vector<LightSource> lightSources;
 
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
@@ -82,7 +82,7 @@ public:
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN);
+	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, SHADING_TYPES shading_type = FLAT_SHADING);
 	void DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color = CYAN);
 	void DrawLine(int x1, int y1, int x2, int y2, COLORS color = CYAN);
 	void DrawFaceNormals(const vector<vec3>* f_normals);
@@ -93,7 +93,7 @@ public:
 	void SetProjection(const mat4& projection);
 	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
 	void AdjustToCameraAspectRatio(float camera_aspect_ratio);
-	void SetLightSources(const vector<LightSource*>* light_sources);
+	void SetLightSources(const vector<LightSource>* light_sources);
 	void UpdateScreenSize(int width, int height);
 	void SwapBuffers();
 	void ClearColorBuffer();

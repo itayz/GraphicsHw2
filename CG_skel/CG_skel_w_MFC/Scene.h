@@ -14,7 +14,16 @@ enum CAMERA_ZOOM {
 };
 
 class Light {
+	vector<vec3> model;
+	LIGHT_SOURCE_TYPE source_type;
 
+public:
+	LightSource light_source;
+
+	Light();
+	vec4 GetPoisition();
+	void Draw(Renderer& renderer);
+	~Light();
 };
 
 class Camera {
@@ -63,7 +72,7 @@ public:
 class Scene {
 
 	vector<Model*> models;
-	vector<LightSource*> lights;
+	vector<Light*> lights;
 	vector<Camera*> cameras;
 	Renderer *m_renderer;
 	PrimMeshModel *xzGrid;
@@ -81,6 +90,7 @@ class Scene {
 	void rotateModel(MeshModel *model, AXES axis, float theta);
 	void translateModel(MeshModel *model, AXES axis, float distance);
 	void scaleModel(MeshModel *model, AXES axis, float s);
+	void updateRendererLightSources();
 
 public:
 	Scene() {};
@@ -93,9 +103,9 @@ public:
 	void changeActiveCamera();
 	//Light funcs
 	void changeActiveLight();
-	void addLightSource(LightSource* light);
+	void addLightSource(Light* light);
 	void removeLight();
-	LightSource* getActiveLight();
+	Light* getActiveLight();
 	void transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount);
 	//
 	void addModel(Model* model);

@@ -277,6 +277,15 @@ void Scene::loadOBJModel(string fileName)
 	activeModel = models.size() - 1;
 }
 
+void Scene::updateRendererLightSources()
+{
+	vector<LightSource> light_sources;
+	for (int i = 0; i < lights.size(); ++i) {
+		light_sources.push_back(lights[i]->light_source);
+	}
+	m_renderer->SetLightSources(&light_sources);
+}
+
 void Scene::draw(Renderer &renderer)
 {
 	// 1. Send the renderer the current camera transform and the projection
@@ -287,7 +296,7 @@ void Scene::draw(Renderer &renderer)
 	m_renderer->ClearDepthBuffer();
 	// 2. Tell all models to draw themselves
 	Model *model = activeModel > -1 ? models[activeModel] : NULL;
-	LightSource *light = activeLight > -1 ? lights[activeLight] : NULL;
+	Light *light = activeLight > -1 ? lights[activeLight] : NULL;
 	if (draw_xzGrid) {
 		this->xzGrid->draw(renderer, xzGridColor);
 	}
@@ -305,7 +314,7 @@ void Scene::draw(Renderer &renderer)
 				c->Draw(renderer, cameraColor);
 		}
 	}
-	for each (LightSource* l in lights)
+	for each (Light* l in lights)
 	{
 		if (l == light)
 			l->Draw(renderer);
@@ -540,7 +549,7 @@ void Scene::removeLight()
 			this->changeActiveLight();
 	}
 }
-LightSource* Scene::getActiveLight()
+Light* Scene::getActiveLight()
 {
 	return lights.at(activeLight);
 }
@@ -581,8 +590,52 @@ void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float 
 	}*/
 }
 
-void Scene::addLightSource(LightSource* light)
+void Scene::addLightSource(Light* light)
 {
 	lights.push_back(light);
 	activeLight = lights.size()-1;
+}
+
+vec3 v[4] = {
+	vec3(0.0, 0.0, 1.0),
+	vec3(0.0, 0.942809, -0.333333),
+	vec3(-0.816497, -0.471405, -0.333333),
+	vec3(0.816497, -0.471405, -0.333333)
+};
+
+inline void Triangle(vector<vec3>& model, const vec3& p1, const vec3& p2, const vec3& p3) {
+	model.push_back(p1);
+	model.push_back(p2);
+	model.push_back(p3);
+}
+
+void DivideTriangle(vector<vec3>& model, const vec3& a, const vec3& b, const vec3& c, int n) {
+	vec3 v1, v2, v3;
+	if (n > 0) {
+		v1 = normalize(a + b);
+		v2 = normalize(a + c);
+		v3 = normalize(b + c);
+		DivideTriangle(model, a, v2, v1, n - 1);
+		DivideTriangle(model, c, v3, v2, n - 1);
+		DivideTriangle(model, b, v1, v3, n - 1);
+		DivideTriangle(model, v1, v2, v3, n - 1);
+	}
+	else {
+		Triangle(model, a, b, c);
+	}
+}
+
+void Tetrahedron(vector<vec3>& model, int n) {
+	DivideTriangle(model, v[0], v[1], v[2], n);
+	DivideTriangle(model, v[3], v[2], v[1], n);
+	DivideTriangle(model, v[0], v[3], v[1], n);
+	DivideTriangle(model, v[0], v[2], v[3], n);
+}
+
+Light::Light() {
+	Tetrahedron(model, 3);
+}
+
+void Light::Draw(Renderer& renderer) {
+	renderer.DrawTriangles(&model);
 }
