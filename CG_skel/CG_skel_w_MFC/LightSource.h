@@ -4,9 +4,9 @@
 
 struct LightSource
 {
-	vec4 ambient;              // Aclarri
-	vec4 diffuse;              // Dcli
-	vec4 specular;             // Scli
+	vec3 ambient;              // Aclarri
+	vec3 diffuse;              // Dcli
+	vec3 specular;             // Scli
 	vec4 position;             // Ppli
 	vec4 halfVector;           // Derived: Hi
 	vec3 spotDirection;        // Sdli
