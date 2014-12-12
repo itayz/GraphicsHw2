@@ -82,7 +82,6 @@ public:
 	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN);
 	void DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color = CYAN);
 	void DrawLine(int x1, int y1, int x2, int y2, COLORS color = CYAN);
-	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL);
 	void DrawFaceNormals(const vector<vec3>* f_normals);
 	void DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>* v_normals);
 	void DrawLine(int x1, int y1, int x2, int y2);

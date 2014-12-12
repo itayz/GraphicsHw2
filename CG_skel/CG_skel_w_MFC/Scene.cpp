@@ -308,9 +308,9 @@ void Scene::draw(Renderer &renderer)
 	for each (LightSource* l in lights)
 	{
 		if (l == light)
-			l->draw(renderer, lightBulbColor);
+			l->Draw(renderer);
 		else
-			l->draw(renderer, l->getColor());
+			l->Draw(renderer);
 
 	}
 	m_renderer->SwapBuffers();
@@ -547,7 +547,7 @@ LightSource* Scene::getActiveLight()
 
 void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount)
 {
-	if (activeLight == -1 || (frame != MODEL && frame != WORLD)) {
+	/*if (activeLight == -1 || (frame != MODEL && frame != WORLD)) {
 		return;
 	}
 	LightSource* model = lights[activeLight];
@@ -578,7 +578,7 @@ void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float 
 			model->_world_transform = Translate(v) * model->_world_transform;
 		}
 		break;
-	}
+	}*/
 }
 
 void Scene::addLightSource(LightSource* light)

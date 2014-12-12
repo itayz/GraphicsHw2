@@ -597,7 +597,7 @@ void lightMenu(int id)
 	switch (id)
 	{
 	case (ADD_LIGHT) :
-		l = new LightSource(YELLOW);
+		l = new LightSource();
 		scene->addLightSource(l); //add to scene
 		scene->draw(*renderer);
 		break;
@@ -619,7 +619,7 @@ void lightMenu(int id)
 
 void lightColor(int id)
 {
-	switch (id)
+	/*switch (id)
 	{
 	case (LIGHT_WHITE) :
 		scene->getActiveLight()->setColor(WHITE);
@@ -633,12 +633,12 @@ void lightColor(int id)
 		scene->getActiveLight()->setColor(YELLOW);
 		scene->draw(*renderer);
 		break;
-	}
+	}*/
 }
 
 void lightType(int id)
 {
-	switch (id)
+	/*switch (id)
 	{
 	case (PARRALLEL_SOURCE) :
 		scene->getActiveLight()->setSourceLightType(PARALLEL_LIGHT);
@@ -648,7 +648,7 @@ void lightType(int id)
 		scene->getActiveLight()->setSourceLightType(POINT_LIGHT);
 		scene->draw(*renderer);
 		break;
-	}
+	}*/
 
 }
 
