@@ -284,6 +284,7 @@ void Scene::draw(Renderer &renderer)
 	m_renderer->SetProjection(camera->GetProjection());
 	m_renderer->SetCameraTransform(camera->GetTransform());
 	m_renderer->ClearColorBuffer();
+	m_renderer->ClearDepthBuffer();
 	// 2. Tell all models to draw themselves
 	Model *model = activeModel > -1 ? models[activeModel] : NULL;
 	LightSource *light = activeLight > -1 ? lights[activeLight] : NULL;

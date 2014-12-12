@@ -6,6 +6,38 @@
 #include "GL/glew.h"
 
 using namespace std;
+
+struct ScanLines
+{
+	int yMin, yMax;
+	int *xLimits;
+
+	ScanLines(int screenHeight) {
+		xLimits = new int[screenHeight * 2];
+	}
+
+	~ScanLines() {
+		delete xLimits;
+	}
+
+	void ResetLimits() {
+		for (int i = 2 * yMin; i <= 2 * yMax; i += 2) {
+			xLimits[i] = INT_MAX;
+			xLimits[i + 1] = INT_MIN;
+		}
+	}
+
+	inline void SetLimits(int x, int y) {
+		int i = 2 * y;
+		if (x < xLimits[i]) {
+			xLimits[i] = x;
+		}
+		if (x > xLimits[i + 1]) {
+			xLimits[i + 1] = x;
+		}
+	}
+};
+
 class Renderer
 {
 	float *m_outBuffer; // 3*width*height
@@ -22,6 +54,10 @@ class Renderer
 	void CreateLocalBuffer();
 	void PlotPixel(int x, int y, COLORS color = CYAN);
 	bool IsInsideScreen(int x, int y);
+
+	void DrawPixel(int x, int y, float z, const vec4& color);
+	void CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines);
+	void BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& scanLines);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.

@@ -52,6 +52,153 @@ Renderer::~Renderer(void)
 }
 
 
+void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
+{
+	if (m_zbuffer[x+y*m_width] < z) {
+		int pixel = INDEX(m_width, x, y, 0);
+		m_outBuffer[pixel] = color.x;
+		m_outBuffer[pixel + 1] = color.y;
+		m_outBuffer[pixel + 2] = color.z;
+	}
+}
+
+void CalculateMinAndMax(int a, int b, int c, int& min, int& max) {
+	min = a;
+	if (b < min) {
+		min = b;
+	}
+	if (c < min) {
+		min = c;
+	}
+	max = a;
+	if (b > max) {
+		max = b;
+	}
+	if (c > max) {
+		max = c;
+	}
+}
+
+void Renderer::CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines)
+{
+	CalculateMinAndMax(y1, y2, y3, scanLines.yMin, scanLines.yMax);
+	scanLines.ResetLimits();
+	BresenhamAlgorithm(x1, y1, x2, y2, scanLines);
+	BresenhamAlgorithm(x2, y2, x3, y3, scanLines);
+	BresenhamAlgorithm(x3, y3, x1, y1, scanLines);
+}
+
+void Renderer::BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& scanLines)
+{
+	if (x1 == x2) {
+		int yMin, yMax;
+		if (y1 < y2) {
+			yMin = y1;
+			yMax = y2;
+		}
+		else {
+			yMin = y2;
+			yMax = y1;
+		}
+		for (int y = yMin; y <= yMax; ++y) {
+			scanLines.SetLimits(x1, y);
+		}
+	}
+	else if (y1 == y2) {
+		scanLines.SetLimits(x1, y1);
+		scanLines.SetLimits(x2, y2);
+	}
+	else {
+		int dx, dy;
+		dx = x1 - x2;
+		dy = y1 - y2;
+		if (dx < 0) {
+			dx *= -1;
+			dy *= -1;
+		}
+		int slopeSign = dy * dx > 0 ? 1 : -1;
+		bool iterateX = true;
+		// if the slope m is:   -1 <= m <= 1
+		if (-dx <= dy && dy <= dx) {
+
+		}
+		// else - the slope m is:   m < -1   OR   1 < m
+		else {
+			iterateX = false;
+		}
+		// x here represents the iterate axis (NOT necessarily x)
+		int dX, dY, dE, dNE;
+		int xS, yS, xE, yE, d;
+		if (iterateX) {
+			if (x1 < x2) {
+				xS = x1;
+				yS = y1;
+				xE = x2;
+				yE = y2;
+				dX = x2 - x1;
+				dY = y2 - y1;
+			}
+			else {
+				xS = x2;
+				yS = y2;
+				xE = x1;
+				yE = y1;
+				dX = x1 - x2;
+				dY = y1 - y2;
+			}
+		}
+		else {
+			if (y1 < y2) {
+				xS = y1;
+				yS = x1;
+				xE = y2;
+				yE = x2;
+				dX = y2 - y1;
+				dY = x2 - x1;
+			}
+			else {
+				xS = y2;
+				yS = x2;
+				xE = y1;
+				yE = x1;
+				dX = y1 - y2;
+				dY = x1 - x2;
+			}
+		}
+		if (dY < 0) {
+			dY *= -1;
+		}
+		d = 2 * dY - dX;
+		dE = 2 * dY;
+		dNE = 2 * (dY - dX);
+		if (iterateX) {
+			scanLines.SetLimits(xS, yS);
+		}
+		else {
+			scanLines.SetLimits(yS, xS);
+		}
+		while (xS < xE)
+		{
+			if (d < 0)
+			{
+				d += dE;
+				++xS;
+			}
+			else {
+				d += dNE;
+				++xS;
+				yS += slopeSign;
+			}
+			if (iterateX) {
+				scanLines.SetLimits(xS, yS);
+			}
+			else {
+				scanLines.SetLimits(yS, xS);
+			}
+		}
+	}
+}
+
 
 void Renderer::CreateBuffers(int width, int height)
 {
@@ -59,6 +206,7 @@ void Renderer::CreateBuffers(int width, int height)
 	m_height=height;	
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
+	m_zbuffer = new float[m_width*m_height];
 }
 
 void Renderer::SetCameraTransform(const mat4& cTransform)
@@ -86,6 +234,7 @@ void Renderer::AdjustToCameraAspectRatio(float camera_aspect_ratio)
 void Renderer::UpdateScreenSize(int width, int height)
 {
 	delete m_outBuffer;
+	delete m_zbuffer;
 	CreateBuffers(width, height);
 	AdjustToCameraAspectRatio(this->camera_aspect_ratio);
 }
@@ -98,22 +247,37 @@ void Renderer::ClearColorBuffer() {
 	memset(m_outBuffer, 0, 3 * m_width * m_height * sizeof(float));
 }
 
+void Renderer::ClearDepthBuffer() {
+	for (int y = 0; y < m_height; ++y) {
+		for (int x = 0; x < m_width; ++x) {
+			m_zbuffer[y * m_width + x] = -FLT_MAX;
+		}
+	}
+}
+
 void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color)
 {
+	ScanLines scanLines(m_height);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
 	transform.multiply(oTransform);
 	// Draw all the triangles
 	vec4 p1, p2, p3;
-	for (int i = 0; i < vertices->size() / 3; i++) {
-		p1 = vec4((*vertices)[3*i]);
-		p2 = vec4((*vertices)[3*i+1]);
-		p3 = vec4((*vertices)[3*i+2]);
+	vec4 defaultColor = vec4(0.5, 0.9, 0.9, 1);
+	float z = 0;
+	float p1z, p2z, p3z;
+	for (int i = 0; i < vertices->size(); i += 3) {
+		p1 = vec4((*vertices)[i]);
+		p2 = vec4((*vertices)[i+1]);
+		p3 = vec4((*vertices)[i+2]);
 		p1 = transform * p1;
 		p2 = transform * p2;
 		p3 = transform * p3;
+		p1z = p1.z;
+		p2z = p2.z;
+		p3z = p3.z;
 		p1 /= p1.w;
 		p2 /= p2.w;
 		p3 /= p3.w;
@@ -123,12 +287,16 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 		p1 = ndcToScreen * p1;
 		p2 = ndcToScreen * p2;
 		p3 = ndcToScreen * p3;
-		if (p1InsideNDC || p2InsideNDC)
-			DrawLine(p1[0], p1[1], p2[0], p2[1], color);
-		if (p3InsideNDC || p2InsideNDC)
-			DrawLine(p3[0], p3[1], p2[0], p2[1], color);
-		if (p1InsideNDC || p3InsideNDC)
-			DrawLine(p1[0], p1[1], p3[0], p3[1], color);
+		// doing some very tough clipping...
+		if (p1InsideNDC && p2InsideNDC && p3InsideNDC) {
+			CalculateScanLines(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], scanLines);
+			for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
+				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
+					z = 0;	// Replace by real z value calculation for each (x,y)
+					DrawPixel(x, y, z, defaultColor);
+				}
+			}
+		}
 	}
 }
 
