@@ -239,6 +239,11 @@ void Renderer::UpdateScreenSize(int width, int height)
 	AdjustToCameraAspectRatio(this->camera_aspect_ratio);
 }
 
+void Renderer::SetLightSources(const vector<LightSource*>* light_sources)
+{
+	lightSources = vector<LightSource*>(*light_sources);
+}
+
 inline bool IsInsideNDC(const vec4& p) {
 	return (-1 <= p.x && p.x <= 1 && -1 <= p.y && p.y <= 1 && -1 <= p.z && p.z <= 1);
 }

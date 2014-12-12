@@ -312,8 +312,8 @@ void motion(int x, int y)
 			{
 				if (abs(dx) < 30) // continuous movement condition
 				{
-					scene->getActiveLight()->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u))
-						* scene->getActiveLight()->_world_transform;
+					/*scene->getActiveLight()->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u))
+						* scene->getActiveLight()->_world_transform;*/
 					change = true;
 				}
 			}
@@ -341,8 +341,8 @@ void motion(int x, int y)
 			{
 				if (abs(dy) < 30) // continuous movement condition
 				{
-					scene->getActiveLight()->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
-						*scene->getActiveLight()->_world_transform;
+					/*scene->getActiveLight()->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
+						*scene->getActiveLight()->_world_transform;*/
 					change = true;
 				}
 			}

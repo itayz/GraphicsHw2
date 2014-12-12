@@ -4,6 +4,7 @@
 #include "vec.h"
 #include "mat.h"
 #include "GL/glew.h"
+#include "LightSource.h"
 
 using namespace std;
 
@@ -49,6 +50,8 @@ class Renderer
 	mat4 ndcToScreen;
 	mat4 oTransform;
 	mat3 nTransform;
+	vector<LightSource*> lightSources;
+
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
 	void CreateLocalBuffer();
@@ -90,6 +93,7 @@ public:
 	void SetProjection(const mat4& projection);
 	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
 	void AdjustToCameraAspectRatio(float camera_aspect_ratio);
+	void SetLightSources(const vector<LightSource*>* light_sources);
 	void UpdateScreenSize(int width, int height);
 	void SwapBuffers();
 	void ClearColorBuffer();
