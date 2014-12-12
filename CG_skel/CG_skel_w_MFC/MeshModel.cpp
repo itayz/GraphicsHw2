@@ -171,3 +171,8 @@ void MeshModel::compute_face_normals() {
 		face_normals.push_back(tail + normal); //normal to triangle from the datum point.
 	}
 }
+
+void MeshModel::setMaterial(Material::material_type m)
+{
+	material.material_name = m;
+}

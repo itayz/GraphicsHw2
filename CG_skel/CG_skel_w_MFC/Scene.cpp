@@ -286,6 +286,7 @@ void Scene::draw(Renderer &renderer)
 	m_renderer->ClearColorBuffer();
 	// 2. Tell all models to draw themselves
 	Model *model = activeModel > -1 ? models[activeModel] : NULL;
+	LightSource *light = activeLight > -1 ? lights[activeLight] : NULL;
 	if (draw_xzGrid) {
 		this->xzGrid->draw(renderer, xzGridColor);
 	}
@@ -302,6 +303,14 @@ void Scene::draw(Renderer &renderer)
 			if (c != camera)
 				c->Draw(renderer, cameraColor);
 		}
+	}
+	for each (LightSource* l in lights)
+	{
+		if (l == light)
+			l->draw(renderer, lightBulbColor);
+		else
+			l->draw(renderer, l->getColor());
+
 	}
 	m_renderer->SwapBuffers();
 }
@@ -483,6 +492,7 @@ Camera* Scene::getActiveCamera()
 {
 	return cameras.at(activeCamera);
 }
+
 void Scene::removeCamera()
 {
 	if (cameras.size()-1)
@@ -491,6 +501,7 @@ void Scene::removeCamera()
 		this->changeActiveCamera();
 	}
 }
+
 MeshModel* Scene::getActiveModel()
 {
 	return (MeshModel*) models.at(activeModel);
@@ -507,4 +518,70 @@ void Scene::removeModel()
 			this->changeActiveModel();
 		
 	}
+}
+
+void Scene::changeActiveLight()
+{
+	if (lights.size() > 0) {
+		++activeLight;
+		activeLight = activeLight % lights.size();
+	}
+}
+
+void Scene::removeLight()
+{
+	if (lights.size())
+	{
+		lights.pop_back();
+		if (lights.size() == 0)
+			this->activeLight = -1;
+		else
+			this->changeActiveLight();
+	}
+}
+LightSource* Scene::getActiveLight()
+{
+	return lights.at(activeLight);
+}
+
+void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount)
+{
+	if (activeLight == -1 || (frame != MODEL && frame != WORLD)) {
+		return;
+	}
+	LightSource* model = lights[activeLight];
+	vec4 v(0, 0, 0, 1);
+	switch (action) {
+	case ROTATE:
+		if (frame == MODEL) {
+			v = model->_world_transform * v;
+			model->_world_transform = Translate(-v) * model->_world_transform;
+		}
+		rotateModel(model, axis, amount);
+		if (frame == MODEL) {
+			model->_world_transform = Translate(v) * model->_world_transform;
+		}
+		break;
+	case TRANSLATE:
+		if (frame == WORLD) {
+			translateModel(model, axis, amount);
+		}
+		break;
+	case SCALE:
+		if (frame == MODEL) {
+			v = model->_world_transform * v;
+			model->_world_transform = Translate(-v) * model->_world_transform;
+		}
+		scaleModel(model, axis, amount);
+		if (frame == MODEL) {
+			model->_world_transform = Translate(v) * model->_world_transform;
+		}
+		break;
+	}
+}
+
+void Scene::addLightSource(LightSource* light)
+{
+	lights.push_back(light);
+	activeLight = lights.size()-1;
 }

@@ -13,7 +13,9 @@ enum MENU_ITEMS {
 	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
 	ADD_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
-	CHANGE_MODULE,REMOVE_MODULE
+	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LiGHT,
+	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARRALLEL_SOURCE,
+	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW
 
 
 
@@ -40,7 +42,7 @@ Scene *scene;
 Renderer *renderer;
 
 int last_x, last_y;
-bool lb_down, rb_down, mb_down,control_module=false;
+bool lb_down, rb_down, mb_down,control_module=false,control_light=false;
 float rotate_step_size, translate_step_size, scale_up_step_size, scale_down_step_size;
 float translate_camera_step_size = 0.5;
 float step_scale = 1; 
@@ -81,6 +83,18 @@ void keyboard(unsigned char key, int x, int y)
 			}
 			scene->draw(*renderer);
 		}
+		else if (control_light)
+		{
+			if (axis == ALL_AXES) {
+				scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_up_step_size);
+				scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_up_step_size);
+				scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_up_step_size);
+			}
+			else {
+				scene->transformActiveLight(frame, SCALE, axis, scale_up_step_size);
+			}
+			scene->draw(*renderer);
+		}
 		break;
 	case '-':
 		if (control_module)
@@ -92,6 +106,18 @@ void keyboard(unsigned char key, int x, int y)
 			}
 			else {
 				scene->transformActiveModel(frame, SCALE, axis, scale_down_step_size);
+			}
+			scene->draw(*renderer);
+		}
+		else if (control_light)
+		{
+			if (axis == ALL_AXES) {
+				scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_down_step_size);
+				scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_down_step_size);
+				scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_down_step_size);
+			}
+			else {
+				scene->transformActiveLight(frame, SCALE, axis, scale_down_step_size);
 			}
 			scene->draw(*renderer);
 		}
@@ -138,6 +164,11 @@ void specialFunc(int key, int x, int y)
 			scene->transformActiveModel(WORLD, TRANSLATE, X_AXIS, -translate_step_size);
 			scene->draw(*renderer);
 		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, X_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
 		else
 		{
 			scene->translateCameraInRightDirection(-translate_camera_step_size);
@@ -148,6 +179,11 @@ void specialFunc(int key, int x, int y)
 		if (control_module)
 		{
 			scene->transformActiveModel(WORLD, TRANSLATE, X_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, X_AXIS, translate_step_size);
 			scene->draw(*renderer);
 		}
 		else
@@ -162,6 +198,11 @@ void specialFunc(int key, int x, int y)
 			scene->transformActiveModel(WORLD, TRANSLATE, Z_AXIS, translate_step_size);
 			scene->draw(*renderer);
 		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, Z_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
 		else {
 			scene->translateCameraInFocusDirection(-translate_camera_step_size);
 			scene->draw(*renderer);
@@ -171,6 +212,11 @@ void specialFunc(int key, int x, int y)
 		if (control_module)
 		{
 			scene->transformActiveModel(WORLD, TRANSLATE, Z_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, Z_AXIS, -translate_step_size);
 			scene->draw(*renderer);
 		}
 		else
@@ -185,11 +231,21 @@ void specialFunc(int key, int x, int y)
 			scene->transformActiveModel(WORLD, TRANSLATE, Y_AXIS, -translate_step_size);
 			scene->draw(*renderer);
 		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, Y_AXIS, -translate_step_size);
+			scene->draw(*renderer);
+		}
 		break;
 	case GLUT_KEY_PAGE_UP:
 		if (control_module)
 		{
 			scene->transformActiveModel(WORLD, TRANSLATE, Y_AXIS, translate_step_size);
+			scene->draw(*renderer);
+		}
+		else if (control_light)
+		{
+			scene->transformActiveLight(WORLD, TRANSLATE, Y_AXIS, translate_step_size);
 			scene->draw(*renderer);
 		}
 		break;
@@ -252,6 +308,15 @@ void motion(int x, int y)
 					change = true;
 				}
 			}
+			else if (control_light) //module control mode.
+			{
+				if (abs(dx) < 30) // continuous movement condition
+				{
+					scene->getActiveLight()->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u))
+						* scene->getActiveLight()->_world_transform;
+					change = true;
+				}
+			}
 			else //camera control
 			{
 				if (abs(dx) < 40) // continuous movement condition
@@ -272,7 +337,16 @@ void motion(int x, int y)
 					change = true;
 				}
 			}
-			else
+			else if (control_light)
+			{
+				if (abs(dy) < 30) // continuous movement condition
+				{
+					scene->getActiveLight()->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
+						*scene->getActiveLight()->_world_transform;
+					change = true;
+				}
+			}
+			else //camera
 			{
 				if (abs(dy) < 40) //continuous movement condition
 				{
@@ -288,15 +362,33 @@ void motion(int x, int y)
 			{
 				if (abs(dx) < 30) // continuous movement condition
 				{
-					if (axis == ALL_AXES) {
+					if (axis == ALL_AXES) 
+					{
 						scene->transformActiveModel(frame, ROTATE, Y_AXIS, dx * rotate_step_size);
-				}
-					else {
-						scene->transformActiveModel(frame, ROTATE, axis, dx * rotate_step_size);
-			}
+					}
+					else 
+					{
+							scene->transformActiveModel(frame, ROTATE, axis, dx * rotate_step_size);
+					}
 					change = true;
 				}
 			}
+			else if (control_light)
+			{
+				if (abs(dx) < 30) // continuous movement condition
+				{
+					if (axis == ALL_AXES)
+					{
+						scene->transformActiveLight(frame, ROTATE, Y_AXIS, dx * rotate_step_size);
+					}
+					else
+					{
+						scene->transformActiveLight(frame, ROTATE, axis, dx * rotate_step_size);
+					}
+					change = true;
+				}
+			}
+
 		}
 		if (control_module)
 		{
@@ -305,7 +397,15 @@ void motion(int x, int y)
 				scene->transformActiveModel(frame, ROTATE, X_AXIS, -dy * rotate_step_size);
 				change = true;
 				}
+		}
+		else if (control_light)
+		{
+			if (abs(dy) < 30 && axis == ALL_AXES) // continuous movement condition
+			{
+				scene->transformActiveLight(frame, ROTATE, X_AXIS, -dy * rotate_step_size);
+				change = true;
 			}
+		}
 
 	}
 
@@ -329,9 +429,7 @@ void fileMenu(int id)
 		break;
 	case CONTROL_MODULE:
 		control_module = true;
-		break;
-	case CONTROL_CAMERA:
-		control_module = false;
+		control_light = false;
 		break;
 	case WORLD_FRAME:
 		frame = WORLD;
@@ -357,6 +455,7 @@ void mainMenu(int id)
 		break;
 	}
 }
+
 void displayMenu(int id)
 {
 	switch (id)
@@ -375,6 +474,7 @@ void displayMenu(int id)
 	}
 	scene->draw(*renderer);
 }
+
 void addMenu(int id)
 {
 	PrimMeshModel* PRIMITIVE = new PrimMeshModel();
@@ -423,6 +523,10 @@ void cameraMenu(int id)
 	case REMOVE_CAMERA:
 		scene->removeCamera();
 		scene->draw(*renderer);
+		break;
+	case CONTROL_CAMERA:
+		control_module = false;
+		control_light = false;
 		break;
 	case ORTHO:
 		dlg.ctext = "Ortho view Input= left,right,bottom,top,zNear,zFar";
@@ -487,6 +591,67 @@ void parametersMenu(int id)
 
 }
 
+void lightMenu(int id)
+{
+	LightSource* l;
+	switch (id)
+	{
+	case (ADD_LIGHT) :
+		l = new LightSource(YELLOW);
+		scene->addLightSource(l); //add to scene
+		scene->draw(*renderer);
+		break;
+	case (REMOVE_LiGHT) :
+		scene->removeLight();
+		scene->draw(*renderer);
+		break;
+	case (CHANGE_LIGHT) :
+		scene->changeActiveLight();
+		scene->draw(*renderer);
+		break;
+	case (CONTROL_LIGHT) :
+		control_module = false;
+		control_light = true;
+		break;
+	}
+
+}
+
+void lightColor(int id)
+{
+	switch (id)
+	{
+	case (LIGHT_WHITE) :
+		scene->getActiveLight()->setColor(WHITE);
+		scene->draw(*renderer);
+		break;
+	case (LIGHT_BLUE) :
+		scene->getActiveLight()->setColor(BLUE);
+		scene->draw(*renderer);
+		break;
+	case (LIGHT_YELLOW) :
+		scene->getActiveLight()->setColor(YELLOW);
+		scene->draw(*renderer);
+		break;
+	}
+}
+
+void lightType(int id)
+{
+	switch (id)
+	{
+	case (PARRALLEL_SOURCE) :
+		scene->getActiveLight()->setSourceLightType(PARALLEL_LIGHT);
+		scene->draw(*renderer);
+		break;
+	case (POINT_SOURCE) :
+		scene->getActiveLight()->setSourceLightType(POINT_LIGHT);
+		scene->draw(*renderer);
+		break;
+	}
+
+}
+
 void initMenu()
 {
 	int menuFile = glutCreateMenu(fileMenu);
@@ -520,6 +685,7 @@ void initMenu()
 	glutSetMenu(cMenu);
 	glutAddMenuEntry("Add", ADD_CAMERA);
 	glutAddMenuEntry("Remove", REMOVE_CAMERA);
+	glutAddMenuEntry("Control Camera", CONTROL_CAMERA);
 	glutAddMenuEntry("Ortho", ORTHO);
 	glutAddMenuEntry("Frustum", FRUSTRUM);
 	glutAddMenuEntry("Perspective", PERSPECTIVE);
@@ -529,6 +695,27 @@ void initMenu()
 	glutAddMenuEntry("About", MAIN_ABOUT);
 	glutSetMenu(pMenu);
 	glutAddMenuEntry("Transformations Step scale", STEP_SCALE);
+	int lMenu = glutCreateMenu(lightMenu);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Light", lMenu);
+	glutSetMenu(lMenu);
+	glutAddMenuEntry("Add light source",ADD_LIGHT);
+	glutAddMenuEntry("Remove light source", REMOVE_LiGHT);
+	glutAddMenuEntry("Change light source", CHANGE_LIGHT);
+	glutAddMenuEntry("Control light source", CONTROL_LIGHT);
+	int ltMenu = glutCreateMenu(lightType);
+	glutSetMenu(lMenu);
+	glutAddSubMenu("Light source type", ltMenu);
+	glutSetMenu(ltMenu);
+	glutAddMenuEntry("Point source light", POINT_SOURCE);
+	glutAddMenuEntry("Parrallel source light", PARRALLEL_SOURCE);
+	int lcMenu = glutCreateMenu(lightColor);
+	glutSetMenu(lMenu);
+	glutAddSubMenu("Light source color", lcMenu);
+	glutSetMenu(lcMenu);
+	glutAddMenuEntry("WHITE", LIGHT_WHITE);
+	glutAddMenuEntry("BLUE", LIGHT_BLUE);
+	glutAddMenuEntry("YELLOW", LIGHT_YELLOW);
 
 }
 //----------------------------------------------------------------------------

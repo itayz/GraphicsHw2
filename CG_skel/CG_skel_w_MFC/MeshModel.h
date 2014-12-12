@@ -3,7 +3,7 @@
 #include "vec.h"
 #include "mat.h"
 #include <string>
-
+#include "Material.h"
 
 using namespace std;
 
@@ -26,16 +26,16 @@ protected :
 	vector<vec3>		vertex_normals; //OBJ vn
 	vector<vec3>		face_normals; //[tail,normal,...] tail= position of the normal on the triangle. normal-tail= real normal
 	vector<vec3>		bounding_box; //[min, max]
-
+	Material material;
 
 public:
-
 	mat4 _world_transform;
 	mat3 _normal_transform;
-
 	MeshModel(string fileName);
 	~MeshModel(void);
 	void loadFile(string fileName);
 	void draw(Renderer& renderer, COLORS color = CYAN);
 	void compute_face_normals();
+	void setMaterial(Material::material_type m);
+	Material::material_type getMaterial(){ return material.material_name; };
 };

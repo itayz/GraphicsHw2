@@ -4,24 +4,6 @@
 
 PrimMeshModel::PrimMeshModel(int xMin, int xMax, int zMin, int zMax) : primitive_type(XZ_GRID)
 {
-	//vec3 p(xMin, 0, zMin);
-	//for (int x = xMin; x < xMax; ++x) {
-	//	for (int z = zMin; z < zMax; ++z) {
-	//		p.x = x;
-	//		p.z = z;
-	//		vertices.push_back(p);
-	//		++p.x;
-	//		vertices.push_back(p);
-	//		--p.x;
-	//		++p.z;
-	//		vertices.push_back(p);
-	//		vertices.push_back(p);
-	//		++p.x;
-	//		vertices.push_back(p);
-	//		--p.z;
-	//		vertices.push_back(p);
-	//	}
-	//}
 	vec3 p1(0, 0, 0);
 	vec3 p2(0, 0, 0);
 	for (int x = xMin; x < xMax; ++x) {

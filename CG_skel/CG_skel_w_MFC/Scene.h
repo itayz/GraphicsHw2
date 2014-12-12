@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "MeshModel.h"
 #include "PrimMeshModel.h"
+#include "LightSource.h"
 using namespace std;
 
 enum CAMERA_ZOOM {
@@ -62,7 +63,7 @@ public:
 class Scene {
 
 	vector<Model*> models;
-	vector<Light*> lights;
+	vector<LightSource*> lights;
 	vector<Camera*> cameras;
 	Renderer *m_renderer;
 	PrimMeshModel *xzGrid;
@@ -70,6 +71,7 @@ class Scene {
 	bool draw_cameras = false;
 
 	const COLORS cameraColor = BLUE;
+	const COLORS lightBulbColor = WHITE;
 	const COLORS modelColor = CYAN;
 	const COLORS activeModelColor = GREEN;
 	const COLORS xzGridColor = RED;
@@ -89,6 +91,13 @@ public:
 	void showOrHideCameras();
 	void changeActiveModel();
 	void changeActiveCamera();
+	//Light funcs
+	void changeActiveLight();
+	void addLightSource(LightSource* light);
+	void removeLight();
+	LightSource* getActiveLight();
+	void transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount);
+	//
 	void addModel(Model* model);
 	float getActiveCameraAspectRatio();
 	void changeCameraZoom(CAMERA_ZOOM zoom);
