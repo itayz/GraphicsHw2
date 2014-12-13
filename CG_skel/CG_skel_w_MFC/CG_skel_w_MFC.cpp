@@ -657,7 +657,6 @@ void initMenu()
 	int menuFile = glutCreateMenu(fileMenu);
 	glutAddMenuEntry("Open module", FILE_OPEN);
 	glutAddMenuEntry("Control active module", CONTROL_MODULE);
-	glutAddMenuEntry("Control active camera", CONTROL_CAMERA);
 	glutAddMenuEntry("Change active module (m)", CHANGE_MODULE);
 	glutAddMenuEntry("Remove active module", REMOVE_MODULE);
 	glutAddMenuEntry("Transform in model frame", MODEL_FRAME);

@@ -56,6 +56,7 @@ void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
 	if (m_zbuffer[x+y*m_width] < z) {
 		int pixel = INDEX(m_width, x, y, 0);
+		m_zbuffer[x + y*m_width] = z;
 		m_outBuffer[pixel] = color.x;
 		m_outBuffer[pixel + 1] = color.y;
 		m_outBuffer[pixel + 2] = color.z;
@@ -260,6 +261,12 @@ void Renderer::ClearDepthBuffer() {
 	}
 }
 
+inline GLfloat areaOfTriangle(const vec3& a, const vec3& b,const vec3& c)
+{
+	return abs(0.5*(-b.x*a.y+c.x*a.y+a.x*b.y-c.x*b.y-a.x*c.y+b.x*c.y));
+}
+
+
 void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, SHADING_TYPES shading_type)
 {
@@ -271,6 +278,19 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	// Draw all the triangles
 	vec4 p1, p2, p3;
 	vec4 defaultColor = vec4(0.5, 0.9, 0.9, 1);
+	switch (color) {
+	case WHITE:
+		defaultColor = { 1, 1, 1, 1 };
+		break;
+	case YELLOW:
+		defaultColor = { 1, 1, 0, 1 };
+		break;
+	case BLUE:
+		defaultColor = { 0, 0, 1, 1 };
+		break;
+	}
+
+	
 	float z = 0;
 	float p1z, p2z, p3z;
 	for (int i = 0; i < vertices->size(); i += 3) {
@@ -292,12 +312,33 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 		p1 = ndcToScreen * p1;
 		p2 = ndcToScreen * p2;
 		p3 = ndcToScreen * p3;
+		
+
+		#pragma region Plane for each triangle
+		vec3 _p1 = vec3(p1.x, p1.y, p1z);
+		vec3 _p2 = vec3(p2.x, p2.y, p2z);
+		vec3 _p3 = vec3(p3.x, p3.y, p3z);
+		vec3 n = normalize(cross(_p3 - _p1, _p2 - _p1));
+		GLfloat D = -dot(n, _p1);
+		#pragma endregion
+
+
 		// doing some very tough clipping...
 		if (p1InsideNDC && p2InsideNDC && p3InsideNDC) {
 			CalculateScanLines(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], scanLines);
 			for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
-					z = 0;	// Replace by real z value calculation for each (x,y)
+
+				//z interpolation using plane 3D/line for triangle/grid correspondingly
+					if (n[0] == 0 & n[1] == 0 & n[2] == 0)
+					{
+						GLfloat tx = (x - _p1.x) / (_p3.x - _p1.x); //3D line interpolation calculation.
+						z = _p1.z + (tx*(_p3.z - _p1.z));
+					}
+					else //z in plane created by triangle.
+						z = (-n[0] * x - n[1] * y - D) / n[2];
+				
+
 					DrawPixel(x, y, z, defaultColor);
 				}
 			}
