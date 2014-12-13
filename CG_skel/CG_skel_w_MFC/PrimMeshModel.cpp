@@ -75,11 +75,11 @@ void PrimMeshModel::draw(Renderer& renderer, COLORS color)
 {
 	if (primitive_type == XZ_GRID) {
 		renderer.SetObjectMatrices(_world_transform, _normal_transform);
-		renderer.DrawTriangles(&vertices, NULL, NULL, YELLOW);
+		renderer.DrawTriangles(&vertices, NULL, NULL, YELLOW, &material);
 	}
 	if (primitive_type == PYRAMID) {
 		renderer.SetObjectMatrices(_world_transform, _normal_transform);
-		renderer.DrawTriangles(&vertices, NULL, NULL, color); //draw only triangles. default case.
+		renderer.DrawTriangles(&vertices, NULL, NULL, color, &material); //draw only triangles. default case.
 		if (renderer.draw_triangle_normals)
 			renderer.DrawFaceNormals(&face_normals);
 		if (renderer.draw_bounding_box)

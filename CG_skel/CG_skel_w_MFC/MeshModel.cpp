@@ -60,7 +60,7 @@ vec2 vec2fFromStream(std::istream & aStream)
 	return vec2(x, y);
 }
 
-MeshModel::MeshModel(string fileName)
+MeshModel::MeshModel(string fileName, bool uniform)
 {
 	loadFile(fileName);
 }
@@ -152,7 +152,7 @@ void MeshModel::loadFile(string fileName)
 void MeshModel::draw(Renderer& renderer, COLORS color)
 {
 	renderer.SetObjectMatrices(_world_transform, _normal_transform);
-	renderer.DrawTriangles(&vertices, NULL, NULL, color); //draw only triangles. default case.
+	renderer.DrawTriangles(&vertices, NULL, NULL, color, &material); //draw only triangles. default case.
 	if (renderer.draw_triangle_normals)
 		renderer.DrawFaceNormals(&face_normals);
 	if (renderer.draw_vertex_normals)
@@ -172,7 +172,7 @@ void MeshModel::compute_face_normals() {
 	}
 }
 
-void MeshModel::setMaterial(Material::material_type m)
+void MeshModel::setModelMaterial(const ModelMaterial& m)
 {
-	material.material_name = m;
+	material = m;
 }

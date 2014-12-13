@@ -5,6 +5,7 @@
 #include "mat.h"
 #include "GL/glew.h"
 #include "LightSource.h"
+#include "Material.h"
 #include "Fog.h"
 
 using namespace std;
@@ -63,6 +64,7 @@ class Renderer
 	void DrawPixel(int x, int y, float z, const vec4& color);
 	void CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines);
 	void BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& scanLines);
+	vec4 FlatShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.
@@ -85,7 +87,7 @@ public:
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, SHADING_TYPES shading_type = FLAT_SHADING);
+	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, const ModelMaterial* material = NULL, SHADING_TYPES shading_type = FLAT_SHADING);
 	void DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color = CYAN);
 	void DrawFaceNormals(const vector<vec3>* f_normals);
 	void DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>* v_normals);

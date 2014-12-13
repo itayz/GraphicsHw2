@@ -17,9 +17,6 @@ enum FRAMES {
 enum SHADING_TYPES {
 	FLAT_SHADING, GOURAUD_SHADING, PHONG_SHADING
 };
-enum LIGHT_SOURCE_TYPE {
-	POINT_LIGHT, PARALLEL_LIGHT
-};
 
 void specialFunc(int key, int x, int y);
 void mouseWheel(int button, int dir, int x, int y);
