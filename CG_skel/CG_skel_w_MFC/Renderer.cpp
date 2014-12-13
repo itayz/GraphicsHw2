@@ -347,253 +347,9 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	}
 }
 
-void Renderer::PlotPixel(int x, int y, COLORS color)
-{
-	int pixel = INDEX(m_width, x, y, 0);
-	switch (color) {
-	case WHITE:
-		m_outBuffer[pixel] = 1;
-		m_outBuffer[pixel + 1] = 1;
-		m_outBuffer[pixel + 2] = 1;
-		break;
-	case BLACK:
-		m_outBuffer[pixel] = 0;
-		m_outBuffer[pixel + 1] = 0;
-		m_outBuffer[pixel + 2] = 0;
-		break;
-	case RED:
-		m_outBuffer[pixel] = 1;
-		m_outBuffer[pixel + 1] = 0;
-		m_outBuffer[pixel + 2] = 0;
-		break;
-	case GREEN:
-	m_outBuffer[pixel] = 0;
-	m_outBuffer[pixel + 1] = 1;
-		m_outBuffer[pixel + 2] = 0;
-		break;
-	case BLUE:
-		m_outBuffer[pixel] = 0;
-		m_outBuffer[pixel + 1] = 0;
-	m_outBuffer[pixel + 2] = 1;
-		break;
-	case YELLOW:
-		m_outBuffer[pixel] = 1;
-		m_outBuffer[pixel + 1] = 1;
-		m_outBuffer[pixel + 2] = 0;
-		break;
-	case MAGNETA:
-		m_outBuffer[pixel] = 1;
-		m_outBuffer[pixel + 1] = 0;
-		m_outBuffer[pixel + 2] = 1;
-		break;
-	case CYAN:
-		m_outBuffer[pixel] = 0;
-		m_outBuffer[pixel + 1] = 1;
-		m_outBuffer[pixel + 2] = 1;
-		break;
-}
-}
-
 inline bool Renderer::IsInsideScreen(int x, int y)
 {
 	return (0 <= x && x < m_width && 0 <= y && y < m_height);
-}
-
-// draws a line using Bresenham algorithm
-void Renderer::DrawLine(int x1, int y1, int x2, int y2, COLORS color)
-{
-	if ((x1 < 0 && x2 < 0) || (x1 >= m_width && x2 >= m_width)
-		|| (y1 < 0 && y2 < 0) || (y1 >= m_height && y2 >= m_height)) {
-		return;
-	}
-	int x[2], y[2];
-	int dx = x1 - x2;
-	int dy = y1 - y2;
-	int pointsInScreen = 0;
-
-	// in case we're dealing with a straight line.
-	if (dx == 0) {
-		int yLow, yHigh;
-		yLow = y1 < y2 ? y1 : y2;
-		yHigh = y1 + y2 - yLow;
-		if (yLow < 0) {
-			yLow = 0;
-		}
-		if (yHigh >= m_height) {
-			yHigh = m_height - 1;
-		}
-		for (int i = yLow; i <= yHigh; ++i) {
-			PlotPixel(x1, i, color);
-		}
-		return;
-	}
-	else if (dy == 0) {
-		int xLow, xHigh;
-		xLow = x1 < x2 ? x1 : x2;
-		xHigh = x1 + x2 - xLow;
-		if (xLow < 0) {
-			xLow = 0;
-		}
-		if (xHigh >= m_width) {
-			xHigh = m_width - 1;
-		}
-		for (int i = xLow; i <= xHigh; ++i) {
-			PlotPixel(i, y1, color);
-		}
-		return;
-	}
-
-	// calculating the correct end points for the relevant line segment.
-	if (IsInsideScreen(x1, y1)) {
-		x[pointsInScreen] = x1;
-		y[pointsInScreen] = y1;
-		++pointsInScreen;
-	}
-	if (IsInsideScreen(x2, y2)) {
-		x[pointsInScreen] = x2;
-		y[pointsInScreen] = y2;
-		//we make sure visible point is the starting point of the line//
-		int tmp1 = x1;
-		int tmp2 = y1;
-		x1 = x2;
-		y1 = y2;
-		x2 = tmp1;
-		y2 = tmp2;
-		dx = x1 - x2;
-		dy = y1 - y2;
-		++pointsInScreen;
-	}
-
-	if (dx < 0) {
-		dx *= -1;
-		dy *= -1;
-	}
-	int temp;
-	temp = dx * y2 - dy * x2; // temp/dx = n 
-	if (pointsInScreen < 2 && 0 <= temp && temp < dx * m_height && x2<x1) { //left boundry
-		x[pointsInScreen] = 0;
-		y[pointsInScreen] = temp / dx;
-		++pointsInScreen;
-	}
-	temp = dx * y2 + dy * (m_width - 1 - x2);
-	if (pointsInScreen < 2 && 0 <= temp && temp < dx * m_height &&x2>x1) { //right boundry
-		x[pointsInScreen] = m_width - 1;
-		y[pointsInScreen] = temp / dx;
-		++pointsInScreen;
-	}
-	if (dy < 0) {
-		dx *= -1;
-		dy *= -1;
-	}
-	temp = dy * x2 - dx * y2;
-	if (pointsInScreen < 2 && 0 <= temp && temp < dy * m_width && y2<y1) { //bottom boundry
-		x[pointsInScreen] = temp / dy;
-		y[pointsInScreen] = 0;
-		++pointsInScreen;
-	}
-	temp = dy * x2 + dx * (m_height - 1 - y2);
-	if (pointsInScreen < 2 && 0 <= temp && temp < dy * m_width &&y2>y1) { //top boundry
-		x[pointsInScreen] = temp / dy;
-		y[pointsInScreen] = m_height - 1;
-		++pointsInScreen;
-	}
-	if (pointsInScreen < 2) {
-		return;
-	}
-
-	// since we got here it means we have something to draw.
-	if (dx < 0) {
-		dx *= -1;
-		dy *= -1;
-	}
-	int slopeSign = dy * dx > 0 ? 1 : -1;
-	bool iterateX = true;
-	// if the slope m is:   -1 <= m <= 1
-	if (-dx <= dy && dy <= dx) {
-		if (x[0] < x[1]) {
-			x1 = x[0];
-			y1 = y[0];
-			x2 = x[1];
-			y2 = y[1];
-		}
-		else {
-			x1 = x[1];
-			y1 = y[1];
-			x2 = x[0];
-			y2 = y[0];
-		}
-	}
-	// if the slope m is:    m < -1   OR   1 < m
-	else {
-		iterateX = false;
-		if (dy < 0) {
-			dx *= -1;
-			dy *= -1;
-		}
-		if (y[0] < y[1]) {
-			x1 = x[0];
-			y1 = y[0];
-			x2 = x[1];
-			y2 = y[1];
-		}
-		else {
-			x1 = x[1];
-			y1 = y[1];
-			x2 = x[0];
-			y2 = y[0];
-		}
-	}
-
-	// x here represents the iterate axis (NOT necessarily x)
-	int dX, dY, dE, dNE;
-	int xS, yS, xE, yE, d;
-	if (iterateX) {
-		xS = x1;
-		yS = y1;
-		xE = x2;
-		yE = y2;
-		dX = x2 - x1;
-		dY = y2 - y1;
-	}
-	else {
-		xS = y1;
-		yS = x1;
-		xE = y2;
-		yE = x2;
-		dX = y2 - y1;
-		dY = x2 - x1;
-	}
-	if (dY < 0) {
-		dY *= -1;
-	}
-	d = 2 * dY - dX;
-	dE = 2 * dY;
-	dNE = 2 * (dY - dX);
-	if (iterateX) {
-		PlotPixel(xS, yS, color);
-	}
-	else {
-		PlotPixel(yS, xS, color);
-	}
-	while (xS < xE)
-	{
-		if (d < 0)
-		{
-			d += dE;
-			++xS;
-		}
-		else {
-			d += dNE;
-			++xS;
-			yS += slopeSign;
-		}
-		if (iterateX) {
-			PlotPixel(xS, yS, color);
-		}
-		else {
-			PlotPixel(yS, xS, color);
-		}
-	}
 }
 
 
@@ -740,6 +496,8 @@ void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
 
 	vec3 p1, p2,norm;
 	vec4 tail, end;
+	GLfloat z = 0;
+	vec4 defaultColor = vec4(1, 0, 0, 1); //red
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -751,14 +509,33 @@ void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
 		end = tail + vec4(norm, 0);
 		tail = transform * tail;
 		end = transform * end;
+		GLfloat p1z = tail.z;
+		GLfloat p2z = end.z;
+		GLfloat p3z = end.z;
 		tail /= tail.w;
 		end /= end.w;
-		bool tailInsideNDC = IsInsideNDC(tail);
-		bool endInsideNDC = IsInsideNDC(end);
+		bool p1InsideNDC = IsInsideNDC(tail);
+		bool p2InsideNDC = IsInsideNDC(end);
+		bool p3InsideNDC = IsInsideNDC(end);
 		tail = ndcToScreen * tail;
 		end = ndcToScreen * end;
-		if (tailInsideNDC || endInsideNDC)
-			DrawLine(tail[0], tail[1], end[0], end[1],RED);
+		ScanLines scanLines(m_height);
+		vec4 p1 = tail, p2 = end, p3 = end;
+		vec3 _p1 = vec3(p1.x, p1.y, p1z);
+		vec3 _p2 = vec3(p2.x, p2.y, p2z);
+		vec3 _p3 = vec3(p3.x, p3.y, p3z);
+		if (p1InsideNDC && p2InsideNDC && p3InsideNDC) {
+			CalculateScanLines(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], scanLines);
+			for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
+				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
+
+					//z interpolation using plane 3D/line for triangle/grid correspondingly
+					GLfloat tx = (x - _p1.x) / (_p3.x - _p1.x); //3D line interpolation calculation.
+					z = _p1.z + (tx*(_p3.z - _p1.z));
+					DrawPixel(x, y, z, defaultColor);
+				}
+			}
+		}
 	}
 }
 
@@ -766,6 +543,8 @@ void Renderer::DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>
 {
 	vec3 norm;
 	vec4 tail, end, p;
+	GLfloat z = 0;
+	vec4 defaultColor = vec4(1, 0, 0, 1);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -776,13 +555,38 @@ void Renderer::DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>
 		end = tail + vec4(norm, 0);
 		tail = transform * tail;
 		end = transform * end;
+		GLfloat p1z = tail.z;
+		GLfloat p2z = end.z;
+		GLfloat p3z = end.z;
 		tail /= tail.w;
 		end /= end.w;
-		bool tailInsideNDC = IsInsideNDC(tail);
-		bool endInsideNDC = IsInsideNDC(end);
+		bool p1InsideNDC = IsInsideNDC(tail);
+		bool p2InsideNDC = IsInsideNDC(end);
+		bool p3InsideNDC = IsInsideNDC(end);
 		tail = ndcToScreen * tail;
 		end = ndcToScreen * end;
-		if (tailInsideNDC || endInsideNDC)
-			DrawLine(tail[0], tail[1], end[0], end[1],RED);
+		//if (tailInsideNDC && endInsideNDC)
+		//{
+		//	DrawLine(tail[0], tail[1], end[0], end[1], RED);
+		//}
+		ScanLines scanLines(m_height);
+		vec4 p1=tail, p2=end, p3=end;
+		vec3 _p1 = vec3(p1.x, p1.y, p1z);
+		vec3 _p2 = vec3(p2.x, p2.y, p2z);
+		vec3 _p3 = vec3(p3.x, p3.y, p3z);
+
+		if (p1InsideNDC && p2InsideNDC && p3InsideNDC) {
+			CalculateScanLines(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], scanLines);
+			for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
+				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
+
+					//z interpolation using plane 3D/line for triangle/grid correspondingly
+						GLfloat tx = (x - _p1.x) / (_p3.x - _p1.x); //3D line interpolation calculation.
+						z = _p1.z + (tx*(_p3.z - _p1.z));
+					DrawPixel(x, y, z, defaultColor);
+				}
+			}
+		}
+			
 	}
 }
