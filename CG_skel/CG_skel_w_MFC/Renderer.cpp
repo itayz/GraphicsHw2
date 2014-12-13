@@ -57,9 +57,21 @@ void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 	if (m_zbuffer[x+y*m_width] < z) {
 		int pixel = INDEX(m_width, x, y, 0);
 		m_zbuffer[x + y*m_width] = z;
-		m_outBuffer[pixel] = color.x;
-		m_outBuffer[pixel + 1] = color.y;
-		m_outBuffer[pixel + 2] = color.z;
+		if (draw_fog)
+		{
+			vec4 c = this->fog->draw(z, color);
+			m_outBuffer[pixel] = c.x;
+			m_outBuffer[pixel + 1] = c.y;
+			m_outBuffer[pixel + 2] = c.z;
+		} 
+		else
+		{
+			m_outBuffer[pixel] = color.x;
+			m_outBuffer[pixel + 1] = color.y;
+			m_outBuffer[pixel + 2] = color.z;
+		}
+		
+		
 	}
 }
 
@@ -346,6 +358,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 		}
 	}
 }
+
+
 
 inline bool Renderer::IsInsideScreen(int x, int y)
 {

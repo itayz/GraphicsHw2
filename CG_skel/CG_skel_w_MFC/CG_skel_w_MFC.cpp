@@ -15,7 +15,7 @@ enum MENU_ITEMS {
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
 	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LiGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARRALLEL_SOURCE,
-	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW
+	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG
 
 
 
@@ -35,6 +35,7 @@ enum MENU_ITEMS {
 #include <string>
 #include "PrimMeshModel.h"
 #include "InputDialog.h"
+#include "Fog.h"
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
 
@@ -652,6 +653,19 @@ void lightType(int id)
 
 }
 
+void effects(int id)
+{
+	Fog* fog; 
+	switch (id)
+	{
+	case (FOG) :
+		fog = new Fog(scene->getActiveCamera()->getzNear(), scene->getActiveCamera()->getzFar(), { 0.83f, 0.83f, 0.83f });
+		renderer->draw_fog = !renderer->draw_fog;
+		renderer->setFog(fog);
+		break;
+	}
+}
+
 void initMenu()
 {
 	int menuFile = glutCreateMenu(fileMenu);
@@ -715,7 +729,11 @@ void initMenu()
 	glutAddMenuEntry("WHITE", LIGHT_WHITE);
 	glutAddMenuEntry("BLUE", LIGHT_BLUE);
 	glutAddMenuEntry("YELLOW", LIGHT_YELLOW);
-
+	int eMenu = glutCreateMenu(effects);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Special effects", eMenu);
+	glutSetMenu(eMenu);
+	glutAddMenuEntry("ON/OFF FOG", FOG);
 }
 //----------------------------------------------------------------------------
 

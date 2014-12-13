@@ -5,6 +5,7 @@
 #include "mat.h"
 #include "GL/glew.h"
 #include "LightSource.h"
+#include "Fog.h"
 
 using namespace std;
 
@@ -51,6 +52,7 @@ class Renderer
 	mat4 oTransform;
 	mat3 nTransform;
 	vector<LightSource> lightSources;
+	Fog* fog;
 
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
@@ -76,6 +78,7 @@ public:
 	bool draw_triangle_normals = false;
 	bool draw_vertex_normals = false;
 	bool draw_bounding_box = false;
+	bool draw_fog = false;
 	///////////////////////////////////
 
 	Renderer();
@@ -84,11 +87,8 @@ public:
 	void Init();
 	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, SHADING_TYPES shading_type = FLAT_SHADING);
 	void DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color = CYAN);
-	void DrawLine(int x1, int y1, int x2, int y2, COLORS color = CYAN);
 	void DrawFaceNormals(const vector<vec3>* f_normals);
 	void DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>* v_normals);
-	void DrawLine(int x1, int y1, int x2, int y2);
-	//void TestDrawLine();
 	void SetCameraTransform(const mat4& cTransform);
 	void SetProjection(const mat4& projection);
 	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
@@ -98,4 +98,5 @@ public:
 	void SwapBuffers();
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
+	void setFog(Fog* f){ fog = f; };
 };
