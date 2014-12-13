@@ -330,15 +330,16 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
 
 				//z interpolation using plane 3D/line for triangle/grid correspondingly
-					if (n[0] == 0 & n[1] == 0 & n[2] == 0)
+					if (n[0] == 0 && n[1] == 0 && n[2] == 0)
 					{
 						GLfloat tx = (x - _p1.x) / (_p3.x - _p1.x); //3D line interpolation calculation.
 						z = _p1.z + (tx*(_p3.z - _p1.z));
 					}
 					else //z in plane created by triangle.
-						z = (-n[0] * x - n[1] * y - D) / n[2];
-				
-
+					{
+						float k = (n[2] != 0) ? ((n[2] > 0) - (n[2] < 0))*0.000001f : 0.000001f;
+						z = (-n[0] * x - n[1] * y - D) / (n[2]+k);
+					}
 					DrawPixel(x, y, z, defaultColor);
 				}
 			}
