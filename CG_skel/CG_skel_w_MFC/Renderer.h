@@ -58,6 +58,7 @@ class Renderer
 	mat3 nTransform;
 	vector<LightSource> lightSources;
 	Fog* fog;
+	SHADING_TYPES shadingType = FLAT_SHADING;
 
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
@@ -92,7 +93,7 @@ public:
 	Renderer(int width, int height);
 	~Renderer(void);
 	void Init();
-	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, const ModelMaterial* material = NULL, SHADING_TYPES shading_type = FLAT_SHADING);
+	void DrawTriangles(const vector<vec3>* vertices, const vector<vec3>* v_normals = NULL, const vector<vec3>* f_normals = NULL, COLORS color = CYAN, const ModelMaterial* material = NULL);
 	void DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color = CYAN);
 	void DrawFaceNormals(const vector<vec3>* f_normals);
 	void DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>* v_normals);
@@ -108,4 +109,5 @@ public:
 	void setFog(Fog* f){ fog = f; };
 	GLfloat sumQuadPixels(int x, int y, const int& color);
 	void antiAlias();
+	void SetShadingType(SHADING_TYPES shading);
 };

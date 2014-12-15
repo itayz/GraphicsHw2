@@ -397,11 +397,11 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 
 
 void Renderer::DrawTriangles(const vector<vec3>* vertices,
-	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, const ModelMaterial* material, SHADING_TYPES shading_type)
+	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, const ModelMaterial* material)
 {
 	ScanLines scanLines(m_height);
-	vec4 eye4 = -1 * viewTransform * vec4(0.0, 0.0, 0.0, 1.0);
-	vec3 eye(eye4.x, eye4.y, eye4.z);
+	vec4 eye4 = viewTransform * vec4(0.0, 0.0, 0.0, 1.0);
+	vec3 eye(-(eye4.x), -(eye4.y), -(eye4.z));
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -450,7 +450,7 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 			p1 = ndcToScreen * p1;
 			p2 = ndcToScreen * p2;
 			p3 = ndcToScreen * p3;
-			if (shading_type == FLAT_SHADING) {
+			if (shadingType == FLAT_SHADING) {
 				vec3 avgPosition(w1);
 				avgPosition += w2;
 				avgPosition += w3;
@@ -487,6 +487,11 @@ inline bool Renderer::IsInsideScreen(int x, int y)
 		return (0 <= x && x < m_width && 0 <= y && y < m_height);
 }
 
+
+void Renderer::SetShadingType(SHADING_TYPES shading)
+{
+	this->shadingType = shading;
+}
 
 /////////////////////////////////////////////////////
 //OpenGL stuff. Don't touch.

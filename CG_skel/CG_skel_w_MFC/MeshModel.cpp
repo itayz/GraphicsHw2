@@ -151,8 +151,12 @@ void MeshModel::loadFile(string fileName)
 
 void MeshModel::draw(Renderer& renderer, COLORS color)
 {
+	vector<vec3>* normals = NULL;
+	if (!vertex_normals.empty()) {
+		normals = &vertex_normals;
+	}
 	renderer.SetObjectMatrices(_world_transform, _normal_transform);
-	renderer.DrawTriangles(&vertices, NULL, NULL, color, &material); //draw only triangles. default case.
+	renderer.DrawTriangles(&vertices, normals, NULL, color, &material); //draw only triangles. default case.
 	if (renderer.draw_triangle_normals)
 		renderer.DrawFaceNormals(&face_normals);
 	if (renderer.draw_vertex_normals)

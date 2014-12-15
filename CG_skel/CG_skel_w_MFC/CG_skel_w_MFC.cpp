@@ -667,6 +667,13 @@ void effects(int id)
 		renderer->antialiasing_mode = !renderer->antialiasing_mode;
 		break;
 	}
+	scene->draw(*renderer);
+}
+
+void shadingType(int id)
+{
+	renderer->SetShadingType((SHADING_TYPES)id);
+	scene->draw(*renderer);
 }
 
 void initMenu()
@@ -738,6 +745,13 @@ void initMenu()
 	glutSetMenu(eMenu);
 	glutAddMenuEntry("FOG ON/OFF", FOG);
 	glutAddMenuEntry("Supersample antialiasing", AA);
+	int sMenu = glutCreateMenu(shadingType);
+	glutSetMenu(mMenu);
+	glutAddSubMenu("Shading Type", sMenu);
+	glutSetMenu(sMenu);
+	glutAddMenuEntry("Flat Shading", FLAT_SHADING);
+	glutAddMenuEntry("Gouraud Shading", GOURAUD_SHADING);
+	glutAddMenuEntry("Phong Shading", PHONG_SHADING);
 }
 //----------------------------------------------------------------------------
 
