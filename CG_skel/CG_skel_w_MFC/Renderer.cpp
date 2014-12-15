@@ -139,7 +139,7 @@ void CalculateMinAndMax(int a, int b, int c, int& min, int& max) {
 	}
 }
 
-void CalculateMinAndMax(const int& a, const int& b, int& min, int& max) {
+void CalculateMinAndMax(int a, int b, int& min, int& max) {
 	min = a;
 	if (b < min) {
 		min = b;
