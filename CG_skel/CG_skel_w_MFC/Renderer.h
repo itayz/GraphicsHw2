@@ -59,6 +59,7 @@ class Renderer
 	vector<LightSource> lightSources;
 	Fog* fog;
 	SHADING_TYPES shadingType = FLAT_SHADING;
+	vec3 eye;
 
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
@@ -110,4 +111,5 @@ public:
 	GLfloat sumQuadPixels(int x, int y, const int& color);
 	void antiAlias();
 	void SetShadingType(SHADING_TYPES shading);
+	void SetEye(const vec3& eye);
 };

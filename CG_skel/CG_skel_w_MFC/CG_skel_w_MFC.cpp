@@ -138,6 +138,7 @@ void keyboard(unsigned char key, int x, int y)
 	case 'c':
 		scene->changeActiveCamera();
 		renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		renderer->SetEye(scene->getActiveCamera()->eye);
 		scene->draw(*renderer);
 		break;
 	case 'a':
@@ -173,6 +174,7 @@ void specialFunc(int key, int x, int y)
 		else
 		{
 			scene->translateCameraInRightDirection(-translate_camera_step_size);
+			renderer->SetEye(scene->getActiveCamera()->eye);
 			scene->draw(*renderer);
 		}
 		break;
@@ -190,6 +192,7 @@ void specialFunc(int key, int x, int y)
 		else
 		{
 			scene->translateCameraInRightDirection(translate_camera_step_size);
+			renderer->SetEye(scene->getActiveCamera()->eye);
 			scene->draw(*renderer);
 		}
 		break;
@@ -206,6 +209,7 @@ void specialFunc(int key, int x, int y)
 		}
 		else {
 			scene->translateCameraInFocusDirection(-translate_camera_step_size);
+			renderer->SetEye(scene->getActiveCamera()->eye);
 			scene->draw(*renderer);
 		}
 		break;
@@ -223,6 +227,7 @@ void specialFunc(int key, int x, int y)
 		else
 		{
 			scene->translateCameraInFocusDirection(translate_camera_step_size);
+			renderer->SetEye(scene->getActiveCamera()->eye);
 			scene->draw(*renderer);
 		}
 		break;
@@ -519,10 +524,12 @@ void cameraMenu(int id)
 	case ADD_CAMERA:
 		c = new Camera();
 		scene->addCamera(c); //add to scene
+		renderer->SetEye(scene->getActiveCamera()->eye);
 		scene->draw(*renderer);
 		break;
 	case REMOVE_CAMERA:
 		scene->removeCamera();
+		renderer->SetEye(scene->getActiveCamera()->eye);
 		scene->draw(*renderer);
 		break;
 	case CONTROL_CAMERA:
@@ -566,7 +573,6 @@ void cameraMenu(int id)
 		scene->draw(*renderer);
 		break;
 	}
-
 }
 
 void parametersMenu(int id)
@@ -639,17 +645,17 @@ void lightColor(int id)
 
 void lightType(int id)
 {
-	/*switch (id)
+	switch (id)
 	{
 	case (PARRALLEL_SOURCE) :
-		scene->getActiveLight()->setSourceLightType(PARALLEL_LIGHT);
+		scene->getActiveLight()->light_source.sourceType = PARALLEL_LIGHT;
 		scene->draw(*renderer);
 		break;
 	case (POINT_SOURCE) :
-		scene->getActiveLight()->setSourceLightType(POINT_LIGHT);
+		scene->getActiveLight()->light_source.sourceType = POINT_LIGHT;
 		scene->draw(*renderer);
 		break;
-	}*/
+	}
 
 }
 
