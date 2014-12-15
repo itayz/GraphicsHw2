@@ -66,7 +66,7 @@ class Renderer
 	void DrawPixel(int x, int y, float z, const vec4& color);
 	void CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines);
 	void BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& scanLines);
-	vec4 FlatShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material);
+	void ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material, vec4& color);
 
 	//////////////////////////////
 	// openGL stuff. Don't touch.

@@ -3,6 +3,7 @@
 #include "CG_skel_w_MFC.h"
 #include "InitShader.h"
 #include "GL\freeglut.h"
+#include "Triangle2D.h"
 
 #define INDEX(width,x,y,c) (x+y*width)*3+c
 
@@ -138,6 +139,17 @@ void CalculateMinAndMax(int a, int b, int c, int& min, int& max) {
 	}
 }
 
+void CalculateMinAndMax(const int& a, const int& b, int& min, int& max) {
+	min = a;
+	if (b < min) {
+		min = b;
+	}
+	max = a;
+	if (b > max) {
+		max = b;
+	}
+}
+
 void Renderer::CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines)
 {
 	CalculateMinAndMax(y1, y2, y3, scanLines.yMin, scanLines.yMax);
@@ -151,14 +163,7 @@ void Renderer::BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& sca
 {
 	if (x1 == x2) {
 		int yMin, yMax;
-		if (y1 < y2) {
-			yMin = y1;
-			yMax = y2;
-		}
-		else {
-			yMin = y2;
-			yMax = y1;
-		}
+		CalculateMinAndMax(y1, y2, yMin, yMax);
 		for (int y = yMin; y <= yMax; ++y) {
 			scanLines.SetLimits(x1, y);
 		}
@@ -177,12 +182,8 @@ void Renderer::BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& sca
 		}
 		int slopeSign = dy * dx > 0 ? 1 : -1;
 		bool iterateX = true;
-		// if the slope m is:   -1 <= m <= 1
-		if (-dx <= dy && dy <= dx) {
-
-		}
-		// else - the slope m is:   m < -1   OR   1 < m
-		else {
+		// if the slope m is:   m < -1   OR   1 < m
+		if (dy < -dx || dx < dy) {
 			iterateX = false;
 		}
 		// x here represents the iterate axis (NOT necessarily x)
@@ -336,25 +337,22 @@ void Renderer::ClearDepthBuffer() {
 		}
 }
 
-inline GLfloat areaOfTriangle(const vec3& a, const vec3& b,const vec3& c)
+void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material, vec4& color)
 {
-	return abs(0.5*(-b.x*a.y+c.x*a.y+a.x*b.y-c.x*b.y-a.x*c.y+b.x*c.y));
-}
-
-
-vec4 Renderer::FlatShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material)
-{
-	vec4 ambient, diffuse, specular, color(0.0, 0.0, 0.0, 1.0);
-	vec3 v = eye - p;
+	vec4 ambient, diffuse, specular;
+	vec3 v = eye;
+	v -= p;
 	vec3 l, half;
+	color = vec4(0.0, 0.0, 0.0, 1.0);
 	float d, s;
 	for (int i = 0; i < lightSources.size(); ++i) {
+		l = vec3(lightSources[i].position.x, lightSources[i].position.y, lightSources[i].position.z);
 		switch (lightSources[i].sourceType) {
 		case POINT_LIGHT:
-			l = vec3(lightSources[i].position.x, lightSources[i].position.y, lightSources[i].position.z) - p;
+			l -= p;
 			break;
 		case PARALLEL_LIGHT:
-			l = -vec3(lightSources[i].position.x, lightSources[i].position.y, lightSources[i].position.z);
+			l *= -1;
 			break;
 		}
 		half = normalize(l + v);
@@ -393,7 +391,6 @@ vec4 Renderer::FlatShadingColor(const vec3& p, const vec3& eye, const vec3& n, c
 		color.z = 1.0;
 	}
 	color.w = 1.0;
-	return color;
 }
 
 
@@ -409,8 +406,9 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	transform.multiply(oTransform);
 	// Draw all the triangles
 	vec4 p1, p2, p3;
-	vec3 v1, v2, v3;
+	vec3 w1, w2, w3;
 	vec4 pixelColor = vec4(0.5, 0.9, 0.9, 1);
+	vec4 uColor, vColor, wColor;
 	switch (color) {
 	case WHITE:
 		pixelColor = { 1, 1, 1, 1 };
@@ -425,14 +423,15 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 
 	float z = 0;
-	float p1z, p2z, p3z;
+	float p1z, p2z, p3z, u, v, w;
+	int x1, y1, x2, y2, x3, y3;
 	for (int i = 0; i < vertices->size(); i += 3) {
 		p1 = oTransform * vec4((*vertices)[i]);
 		p2 = oTransform * vec4((*vertices)[i + 1]);
 		p3 = oTransform * vec4((*vertices)[i + 2]);
-		v1 = vec3(p1.x, p1.y, p1.z);
-		v2 = vec3(p2.x, p2.y, p2.z);
-		v3 = vec3(p3.x, p3.y, p3.z);
+		w1 = vec3(p1.x, p1.y, p1.z);
+		w2 = vec3(p2.x, p2.y, p2.z);
+		w3 = vec3(p3.x, p3.y, p3.z);
 		p1 = transform * vec4((*vertices)[i]);
 		p2 = transform * vec4((*vertices)[i + 1]);
 		p3 = transform * vec4((*vertices)[i + 2]);
@@ -442,45 +441,32 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 		p1 /= p1.w;
 		p2 /= p2.w;
 		p3 /= p3.w;
-		bool p1InsideNDC = IsInsideNDC(p1);
-		bool p2InsideNDC = IsInsideNDC(p2);
-		bool p3InsideNDC = IsInsideNDC(p3);
 
 		// doing some very tough clipping...
-		if (p1InsideNDC && p2InsideNDC && p3InsideNDC) {
+		if (IsInsideNDC(p1) && IsInsideNDC(p2) && IsInsideNDC(p3)) {
 			p1 = ndcToScreen * p1;
 			p2 = ndcToScreen * p2;
 			p3 = ndcToScreen * p3;
-
-#pragma region Plane for each triangle
-			vec3 _p1 = vec3(p1.x, p1.y, p1z);
-			vec3 _p2 = vec3(p2.x, p2.y, p2z);
-			vec3 _p3 = vec3(p3.x, p3.y, p3z);
-			vec3 n = normalize(cross(_p3 - _p1, _p2 - _p1));
-			GLfloat D = -dot(n, _p1);
-#pragma endregion
-
 			if (shading_type == FLAT_SHADING) {
-				vec3 avgPosition = (v1 + v2 + v3) / 3;
-				vec3 normal = normalize(cross(v3 - v2, v1 - v2));
-				pixelColor = FlatShadingColor(avgPosition, eye, normal, material->materials[0]);
+				vec3 avgPosition(w1);
+				avgPosition += w2;
+				avgPosition += w3;
+				avgPosition /= 3;
+				vec3 normal = normalize(cross(w3 - w2, w1 - w2));
+				ShadingColor(avgPosition, eye, normal, material->materials[0], pixelColor);
 			}
-
-			CalculateScanLines(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], scanLines);
+			x1 = p1[0];
+			y1 = p1[1];
+			x2 = p2[0];
+			y2 = p2[1];
+			x3 = p3[0];
+			y3 = p3[1];
+			CalculateScanLines(x1, y1, x2, y2, x3, y3, scanLines);
+			Triangle2D triangle(x1, y1, x2, y2, x3, y3);
 			for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 				for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
-
-					//z interpolation using plane 3D/line for triangle/grid correspondingly
-					if (n[0] == 0 && n[1] == 0 && n[2] == 0)
-					{
-						GLfloat tx = (x - _p1.x) / (_p3.x - _p1.x); //3D line interpolation calculation.
-						z = _p1.z + (tx*(_p3.z - _p1.z));
-					}
-					else //z in plane created by triangle.
-					{
-						float k = (n[2] != 0) ? ((n[2] > 0) - (n[2] < 0))*0.000001f : 0.000001f;
-						z = (-n[0] * x - n[1] * y - D) / (n[2] + k);
-					}
+					triangle.Barycentric(x, y, u, v, w);
+					z = u * p1z + v * p2z + w * p3z;
 					DrawPixel(x, y, z, pixelColor);
 				}
 			}
