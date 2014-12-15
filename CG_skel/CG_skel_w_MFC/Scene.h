@@ -14,8 +14,10 @@ enum CAMERA_ZOOM {
 };
 
 class Light {
-	vector<vec3> model;
+	vector<vec3> modelPointLight;
+	vector<vec3> modelParallelLight;
 	ModelMaterial material;
+
 
 public:
 	LightSource light_source;
@@ -92,7 +94,6 @@ class Scene {
 	void rotateModel(MeshModel *model, AXES axis, float theta);
 	void translateModel(MeshModel *model, AXES axis, float distance);
 	void scaleModel(MeshModel *model, AXES axis, float s);
-	void updateRendererLightSources();
 
 public:
 	Scene() {};
@@ -109,6 +110,7 @@ public:
 	void removeLight();
 	Light* getActiveLight();
 	void transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount);
+	void updateRendererLightSources();
 	//
 	void addModel(Model* model);
 	float getActiveCameraAspectRatio();

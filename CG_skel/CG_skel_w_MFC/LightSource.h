@@ -25,9 +25,12 @@ struct LightSource
 
 	LightSource() {
 		sourceType = PARALLEL_LIGHT;
-		ambient = vec3(0.8f, 0.8f, 0.8f);
+		/*ambient = vec3(0.8f, 0.8f, 0.8f);
 		diffuse = vec3(0.8f, 0.8f, 0.8f);
-		specular = vec3(0.8f, 0.8f, 0.8f);
-		position = vec4(-1, -1, -1, 0);
+		specular = vec3(0.8f, 0.8f, 0.8f);*/
+		ambient = vec3(0.8f, 0.8f, 0.8f);
+		diffuse = vec3(15.8f, 15.8f, 15.8f);
+		specular = vec3(15.8f, 15.8f, 15.8f);
+		position = vec4(-1.0, -1.0, -1.0, 1.0);
 	}
 };

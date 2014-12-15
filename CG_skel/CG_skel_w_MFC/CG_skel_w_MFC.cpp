@@ -649,10 +649,12 @@ void lightType(int id)
 	{
 	case (PARRALLEL_SOURCE) :
 		scene->getActiveLight()->light_source.sourceType = PARALLEL_LIGHT;
+		scene->updateRendererLightSources();
 		scene->draw(*renderer);
 		break;
 	case (POINT_SOURCE) :
 		scene->getActiveLight()->light_source.sourceType = POINT_LIGHT;
+		scene->updateRendererLightSources();
 		scene->draw(*renderer);
 		break;
 	}

@@ -640,10 +640,17 @@ void Tetrahedron(vector<vec3>& model, int n) {
 }
 
 Light::Light() {
-	Tetrahedron(model, 3);
+	Tetrahedron(modelPointLight, 3);
 }
 
 void Light::Draw(Renderer& renderer) {
-	renderer.SetObjectMatrices(mat4(1.0), mat3(1.0));
-	renderer.DrawTriangles(&model, NULL, NULL, CYAN, &material);
+	renderer.SetObjectMatrices(Translate(light_source.position), mat3(1.0));
+	switch (light_source.sourceType) {
+	case POINT_LIGHT:
+		renderer.DrawTriangles(&modelPointLight, NULL, NULL, CYAN, &material);
+		break;
+	case PARALLEL_LIGHT:
+		renderer.DrawTriangles(&modelParallelLight, NULL, NULL, CYAN, &material);
+		break;
+	}
 }

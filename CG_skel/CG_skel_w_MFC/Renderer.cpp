@@ -77,6 +77,16 @@ void Renderer::antiAlias() {
 	}
 }
 
+float Renderer::GetPixelZValue(int x, int y)
+{
+	if (antialiasing_mode) {
+		return m_aa_zbuffer[x + y*m_width * 2];
+	}
+	else {
+		return m_zbuffer[x + y*m_width];
+	}
+}
+
 void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
 	if (antialiasing_mode)
@@ -344,13 +354,18 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 	vec3 l, half;
 	vec4 noColor(0.0, 0.0, 0.0, 1.0), ambient, diffuse, specular;
 	color = noColor;
-	float d, s;
+	float d, s, distance, distanceAttenuation;
 	for (int i = 0; i < lightSources.size(); ++i) {
 		LightSource& lightSource = lightSources[i];
 		l = vec3(lightSource.position.x, lightSource.position.y, lightSource.position.z);
 		switch (lightSource.sourceType) {
 		case POINT_LIGHT:
 			l -= p;
+			distance = length(l);
+			distanceAttenuation = lightSource.constantAttenuation;
+			distanceAttenuation += lightSource.linearAttenuation * distance;
+			distanceAttenuation += lightSource.quadraticAttenuation * (distance * distance);
+			distanceAttenuation = 1 / distanceAttenuation;
 			break;
 		case PARALLEL_LIGHT:
 			l *= -1;
@@ -363,20 +378,25 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 			diffuse = lightSource.diffuse;
 			diffuse *= material.diffuse;
 			diffuse *= (d / length(l));
+			half = l;
+			half += v;
+			s = dot(half, n);
+			if (s > 0.0) {
+				specular = lightSource.specular;
+				specular *= material.specular;
+				specular *= pow(s / length(half), material.shininess);
+			}
+			else {
+				specular = noColor;
+			}
 		}
 		else {
 			diffuse = noColor;
-		}
-		half = l;
-		half += v;
-		s = dot(half, n);
-		if (s > 0.0) {
-			specular = lightSource.specular;
-			specular *= material.specular;
-			specular *= pow(s / length(half), material.shininess);
-		}
-		else {
 			specular = noColor;
+		}
+		if (lightSource.sourceType == POINT_LIGHT) {
+			diffuse *= distanceAttenuation;
+			specular *= distanceAttenuation;
 		}
 		color += ambient;
 		color += diffuse;
@@ -475,6 +495,9 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
 						triangle.Barycentric(x, y, u, v, w);
 						z = u * p1z + v * p2z + w * p3z;
+						if (z <= GetPixelZValue(x, y)) {
+							continue;
+						}
 						pixelColor = uColor * u;
 						pixelColor += vColor * v;
 						pixelColor += wColor * w;
@@ -490,6 +513,9 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
 						triangle.Barycentric(x, y, u, v, w);
 						z = u * p1z + v * p2z + w * p3z;
+						if (z <= GetPixelZValue(x, y)) {
+							continue;
+						}
 						vec3 point = u * w1 + v * w2 + w * w3;
 						vec3 pointNormal = u * n1 + v * n2 + w * n3;
 						if (material->uniform) {

@@ -67,6 +67,7 @@ class Renderer
 	void PlotPixel(int x, int y, COLORS color = CYAN);
 	bool IsInsideScreen(int x, int y);
 
+	float GetPixelZValue(int x, int y);
 	void DrawPixel(int x, int y, float z, const vec4& color);
 	void CalculateScanLines(int x1, int y1, int x2, int y2, int x3, int y3, ScanLines& scanLines);
 	void BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& scanLines);
