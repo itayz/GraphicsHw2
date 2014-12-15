@@ -12,6 +12,30 @@ struct Material {
 	Material() {};
 	Material(const vec3& a, const vec3& d, const vec3& s, const vec3& e, GLfloat shi) : ambient(a), diffuse(d), specular(s), emission(e), shininess(shi) {};
 	~Material() {};
+
+	Material operator + (const Material& m) const
+	{
+		return Material(ambient + m.ambient, diffuse + m.diffuse, specular + m.specular, emission + m.emission, shininess + m.shininess);
+	}
+
+	Material operator * (const GLfloat s) const
+	{
+		return Material(ambient * s, diffuse * s, specular * s, emission * s, shininess * s);
+	}
+
+	Material& operator *= (const GLfloat s)
+	{
+		ambient *= s;
+		diffuse *= s;
+		specular *= s;
+		emission *= s;
+		shininess *= s;
+	}
+
+	friend Material operator * (const GLfloat s, const Material& m)
+	{
+		return m * s;
+	}
 };
 
 class Materials
