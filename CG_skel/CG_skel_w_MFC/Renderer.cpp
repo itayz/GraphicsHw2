@@ -441,7 +441,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 
 	float z = 0;
-	float p1z, p2z, p3z, u, v, w;
+	float p1z, p2z, p3z;
+	vec3 weights;
 	int x1, y1, x2, y2, x3, y3;
 	for (int i = 0; i < vertices->size(); i += 3) {
 		vec4 v1 = (*vertices)[i];
@@ -493,14 +494,14 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				ShadingColor(w3, eye, n3, material->materials[2], wColor);
 				for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
-						triangle.Barycentric(x, y, u, v, w);
-						z = u * p1z + v * p2z + w * p3z;
+						triangle.Barycentric(x, y, weights);
+						z = weights.x * p1z + weights.y * p2z + weights.z * p3z;
 						if (z <= GetPixelZValue(x, y)) {
 							continue;
 						}
-						pixelColor = uColor * u;
-						pixelColor += vColor * v;
-						pixelColor += wColor * w;
+						pixelColor = uColor * weights.x;
+						pixelColor += vColor * weights.y;
+						pixelColor += wColor * weights.z;
 						DrawPixel(x, y, z, pixelColor);
 					}
 				}
@@ -511,18 +512,18 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				vec3 n3 = nTransform * (*v_normals)[i + 2];
 				for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
-						triangle.Barycentric(x, y, u, v, w);
-						z = u * p1z + v * p2z + w * p3z;
+						triangle.Barycentric(x, y, weights);
+						z = weights.x * p1z + weights.y * p2z + weights.z * p3z;
 						if (z <= GetPixelZValue(x, y)) {
 							continue;
 						}
-						vec3 point = u * w1 + v * w2 + w * w3;
-						vec3 pointNormal = u * n1 + v * n2 + w * n3;
+						vec3 point = weights.x * w1 + weights.y * w2 + weights.z * w3;
+						vec3 pointNormal = weights.x * n1 + weights.y * n2 + weights.z * n3;
 						if (material->uniform) {
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
 						}
 						else {
-							Material avgMaterial = material->materials[0] * u + material->materials[1] * v + material->materials[2] * w;
+							Material avgMaterial = material->materials[0] * weights.x + material->materials[1] * weights.y + material->materials[2] * weights.z;
 							ShadingColor(point, eye, pointNormal, avgMaterial, pixelColor);
 						}
 						DrawPixel(x, y, z, pixelColor);
@@ -532,8 +533,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 			else {
 				for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
-						triangle.Barycentric(x, y, u, v, w);
-						z = u * p1z + v * p2z + w * p3z;
+						triangle.Barycentric(x, y, weights);
+						z = weights.x * p1z + weights.y * p2z + weights.z * p3z;
 						DrawPixel(x, y, z, pixelColor);
 					}
 				}
