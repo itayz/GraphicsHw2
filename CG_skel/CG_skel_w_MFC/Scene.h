@@ -15,7 +15,7 @@ enum CAMERA_ZOOM {
 
 class Light {
 	vector<vec3> model;
-	LIGHT_SOURCE_TYPE source_type;
+	ModelMaterial material;
 
 public:
 	LightSource light_source;

@@ -258,6 +258,11 @@ Scene::Scene(Renderer *renderer) : m_renderer(renderer)
 	Camera* c = new Camera();
 	c->LookAt(vec3(5, 5, 5), vec3(0, 0, 0), vec3(0, 1, 0), true);
 	//c->Frustum(-2, 2, -2, 2, -1, -50);
+
+	LightSource lightSource;
+	lightSource.sourceType = PARALLEL_LIGHT;
+	lightSource.position = vec4(-1, -1, -1, 0);
+
 	cameras.push_back(c);
 	activeCamera = 0;
 	activeModel = -1;
@@ -543,6 +548,7 @@ void Scene::removeLight()
 	if (lights.size())
 	{
 		lights.pop_back();
+		updateRendererLightSources();
 		if (lights.size() == 0)
 			this->activeLight = -1;
 		else
@@ -594,6 +600,7 @@ void Scene::addLightSource(Light* light)
 {
 	lights.push_back(light);
 	activeLight = lights.size()-1;
+	updateRendererLightSources();
 }
 
 vec3 v[4] = {
@@ -637,5 +644,6 @@ Light::Light() {
 }
 
 void Light::Draw(Renderer& renderer) {
-	renderer.DrawTriangles(&model);
+	renderer.SetObjectMatrices(mat4(1.0), mat3(1.0));
+	renderer.DrawTriangles(&model, NULL, NULL, CYAN, &material);
 }
