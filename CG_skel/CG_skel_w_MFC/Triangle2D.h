@@ -6,5 +6,5 @@ class Triangle2D
 
 public:
 	Triangle2D(int x1, int y1, int x2, int y2, int x3, int y3);
-	void Barycentric(const int& x, const int& y, float& u, float& v, float& w);
+	void Barycentric(int x, int y, float& u, float& v, float& w);
 };

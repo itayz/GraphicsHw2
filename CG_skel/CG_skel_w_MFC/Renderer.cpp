@@ -339,15 +339,16 @@ void Renderer::ClearDepthBuffer() {
 
 void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material, vec4& color)
 {
-	vec4 ambient, diffuse, specular;
 	vec3 v = eye;
 	v -= p;
 	vec3 l, half;
-	color = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 noColor(0.0, 0.0, 0.0, 1.0), ambient, diffuse, specular;
+	color = noColor;
 	float d, s;
 	for (int i = 0; i < lightSources.size(); ++i) {
-		l = vec3(lightSources[i].position.x, lightSources[i].position.y, lightSources[i].position.z);
-		switch (lightSources[i].sourceType) {
+		LightSource& lightSource = lightSources[i];
+		l = vec3(lightSource.position.x, lightSource.position.y, lightSource.position.z);
+		switch (lightSource.sourceType) {
 		case POINT_LIGHT:
 			l -= p;
 			break;
@@ -355,26 +356,27 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 			l *= -1;
 			break;
 		}
-		half = normalize(l + v);
-		ambient = lightSources[i].ambient;
+		ambient = lightSource.ambient;
 		ambient *= material.ambient;
-		d = dot(n, normalize(l));
+		d = dot(n, l);
 		if (d > 0) {
-			diffuse = lightSources[i].diffuse;
+			diffuse = lightSource.diffuse;
 			diffuse *= material.diffuse;
-			diffuse *= d;
+			diffuse *= (d / length(l));
 		}
 		else {
-			diffuse = vec4(0.0, 0.0, 0.0, 1.0);
+			diffuse = noColor;
 		}
+		half = l;
+		half += v;
 		s = dot(half, n);
 		if (s > 0.0) {
-			specular = lightSources[i].specular;
+			specular = lightSource.specular;
 			specular *= material.specular;
-			specular *= pow(s, material.shininess);
+			specular *= pow(s / length(half), material.shininess);
 		}
 		else {
-			specular = vec4(0.0, 0.0, 0.0, 1.0);
+			specular = noColor;
 		}
 		color += ambient;
 		color += diffuse;
@@ -405,8 +407,6 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	transform.multiply(viewTransform);
 	transform.multiply(oTransform);
 	// Draw all the triangles
-	vec4 p1, p2, p3;
-	vec3 w1, w2, w3;
 	vec4 pixelColor = vec4(0.5, 0.9, 0.9, 1);
 	vec4 uColor, vColor, wColor;
 	switch (color) {
@@ -426,15 +426,18 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	float p1z, p2z, p3z, u, v, w;
 	int x1, y1, x2, y2, x3, y3;
 	for (int i = 0; i < vertices->size(); i += 3) {
-		p1 = oTransform * vec4((*vertices)[i]);
-		p2 = oTransform * vec4((*vertices)[i + 1]);
-		p3 = oTransform * vec4((*vertices)[i + 2]);
-		w1 = vec3(p1.x, p1.y, p1.z);
-		w2 = vec3(p2.x, p2.y, p2.z);
-		w3 = vec3(p3.x, p3.y, p3.z);
-		p1 = transform * vec4((*vertices)[i]);
-		p2 = transform * vec4((*vertices)[i + 1]);
-		p3 = transform * vec4((*vertices)[i + 2]);
+		vec4 v1 = (*vertices)[i];
+		vec4 v2 = (*vertices)[i + 1];
+		vec4 v3 = (*vertices)[i + 2];
+		vec4 p1 = oTransform * v1;
+		vec4 p2 = oTransform * v2;
+		vec4 p3 = oTransform * v3;
+		vec3 w1 = vec3(p1.x, p1.y, p1.z);
+		vec3 w2 = vec3(p2.x, p2.y, p2.z);
+		vec3 w3 = vec3(p3.x, p3.y, p3.z);
+		p1 = transform * v1;
+		p2 = transform * v2;
+		p3 = transform * v3;
 		p1z = p1.z;
 		p2z = p2.z;
 		p3z = p3.z;

@@ -10,7 +10,7 @@ Triangle2D::Triangle2D(int x1, int y1, int x2, int y2, int x3, int y3) : x1(x1),
 	den = 1 / den;
 }
 
-void Triangle2D::Barycentric(const int& x, const int& y, float& u, float& v, float& w) {
+void Triangle2D::Barycentric(int x, int y, float& u, float& v, float& w) {
 	int v2x = x - x1;
 	int v2y = y - y1;
 	v = den * (v2x * v1y - v1x * v2y);

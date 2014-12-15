@@ -30,13 +30,15 @@ struct ScanLines
 		}
 	}
 
-	inline void SetLimits(int x, int y) {
+	void SetLimits(int x, int y) {
 		int i = 2 * y;
-		if (x < xLimits[i]) {
-			xLimits[i] = x;
+		int& xMin = xLimits[i];
+		if (x < xMin) {
+			xMin = x;
 		}
-		if (x > xLimits[i + 1]) {
-			xLimits[i + 1] = x;
+		int& xMax = xLimits[i + 1];
+		if (x > xMax) {
+			xMax = x;
 		}
 	}
 };
