@@ -15,7 +15,7 @@ enum MENU_ITEMS {
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
 	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LiGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARRALLEL_SOURCE,
-	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG
+	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
 
 
 
@@ -663,6 +663,9 @@ void effects(int id)
 		renderer->draw_fog = !renderer->draw_fog;
 		renderer->setFog(fog);
 		break;
+	case (AA) :
+		renderer->antialiasing_mode = !renderer->antialiasing_mode;
+		break;
 	}
 }
 
@@ -733,7 +736,8 @@ void initMenu()
 	glutSetMenu(mMenu);
 	glutAddSubMenu("Special effects", eMenu);
 	glutSetMenu(eMenu);
-	glutAddMenuEntry("ON/OFF FOG", FOG);
+	glutAddMenuEntry("FOG ON/OFF", FOG);
+	glutAddMenuEntry("Supersample antialiasing", AA);
 }
 //----------------------------------------------------------------------------
 

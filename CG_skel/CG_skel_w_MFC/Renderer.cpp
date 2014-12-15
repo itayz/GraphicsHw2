@@ -44,34 +44,80 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 	CreateBuffers(width, height);
 	camera_aspect_ratio = width;
 	camera_aspect_ratio /= height;
-	ndcToScreen = CreateNdcToScreenMatrix(width, height, camera_aspect_ratio);
+	if (antialiasing_mode)
+		ndcToScreen = CreateNdcToScreenMatrix(width*2, height*2, camera_aspect_ratio);
+	else
+		ndcToScreen = CreateNdcToScreenMatrix(width, height, camera_aspect_ratio);
 }
 
 Renderer::~Renderer(void)
 {
 }
 
+GLfloat Renderer::sumQuadPixels(int x, int y, const int& color) {
+	float k = 0;
+	x *= 2; 
+	y *= 2;
+	k += m_aa_outBuffer[INDEX(m_width * 2, x, y, color)];
+	k += m_aa_outBuffer[INDEX(m_width * 2, x + 1, y, color)];
+	k += m_aa_outBuffer[INDEX(m_width * 2, x, y + 1, color)];
+	k += m_aa_outBuffer[INDEX(m_width * 2, x + 1, y + 1, color)];
+	k /= 4;
+	return k;
+}
+
+void Renderer::antiAlias() {
+	for (int x = 0; x<m_width; ++x) {
+		for (int y = 0; y<m_height; ++y) {
+			m_outBuffer[INDEX(m_width, x, y, 0)] = sumQuadPixels(x, y, 0);
+			m_outBuffer[INDEX(m_width, x, y, 1)] = sumQuadPixels(x, y, 1);
+			m_outBuffer[INDEX(m_width, x, y, 2)] = sumQuadPixels(x, y, 2);
+		}
+	}
+}
 
 void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
-	if (m_zbuffer[x+y*m_width] < z) {
-		int pixel = INDEX(m_width, x, y, 0);
-		m_zbuffer[x + y*m_width] = z;
-		if (draw_fog)
+	if (antialiasing_mode)
+	{
+		if (m_aa_zbuffer[x + y*m_width*2] < z)
 		{
-			vec4 c = this->fog->draw(z, color);
-			m_outBuffer[pixel] = c.x;
-			m_outBuffer[pixel + 1] = c.y;
-			m_outBuffer[pixel + 2] = c.z;
-		} 
-		else
-		{
-			m_outBuffer[pixel] = color.x;
-			m_outBuffer[pixel + 1] = color.y;
-			m_outBuffer[pixel + 2] = color.z;
+			m_aa_zbuffer[x + y*m_width*2] = z;
+			if (draw_fog)
+			{
+				vec4 c = this->fog->draw(z, color);
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 0)] = c.x;
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 1)] = c.y;
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 2)] = c.z;
+			}
+			else
+			{
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 0)] = color.x;
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 1)] = color.y;
+				m_aa_outBuffer[INDEX(m_width*2, x, y, 2)] = color.z;
+			}
 		}
-		
-		
+
+	}
+	else
+	{
+		if (m_zbuffer[x + y*m_width] < z)
+		{
+			m_zbuffer[x + y*m_width] = z;
+			if (draw_fog)
+			{
+				vec4 c = this->fog->draw(z, color);
+				m_outBuffer[INDEX(m_width, x, y, 0)] = c.x;
+				m_outBuffer[INDEX(m_width, x, y, 1)] = c.y;
+				m_outBuffer[INDEX(m_width, x, y, 2)] = c.z;
+			}
+			else
+			{
+				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
+				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
+				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
+			}
+		}
 	}
 }
 
@@ -220,6 +266,8 @@ void Renderer::CreateBuffers(int width, int height)
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
 	m_zbuffer = new float[m_width*m_height];
+	m_aa_outBuffer = new float[3 * m_width*m_height*4];
+	m_aa_zbuffer = new float[m_width*m_height*4];
 }
 
 void Renderer::SetCameraTransform(const mat4& cTransform)
@@ -241,13 +289,18 @@ void Renderer::SetObjectMatrices(const mat4& oTransform, const mat3& nTransform)
 void Renderer::AdjustToCameraAspectRatio(float camera_aspect_ratio)
 {
 	this->camera_aspect_ratio = camera_aspect_ratio;
-	ndcToScreen = CreateNdcToScreenMatrix(m_width, m_height, camera_aspect_ratio);
+	if (antialiasing_mode)
+		ndcToScreen = CreateNdcToScreenMatrix(m_width*2, m_height*2, camera_aspect_ratio);
+	else
+		ndcToScreen = CreateNdcToScreenMatrix(m_width, m_height, camera_aspect_ratio);
 }
 
 void Renderer::UpdateScreenSize(int width, int height)
 {
 	delete m_outBuffer;
 	delete m_zbuffer;
+	delete m_aa_outBuffer;
+	delete m_aa_zbuffer;
 	CreateBuffers(width, height);
 	AdjustToCameraAspectRatio(this->camera_aspect_ratio);
 }
@@ -262,15 +315,25 @@ inline bool IsInsideNDC(const vec4& p) {
 }
 
 void Renderer::ClearColorBuffer() {
-	memset(m_outBuffer, 0, 3 * m_width * m_height * sizeof(float));
+	if (antialiasing_mode)
+		memset(m_aa_outBuffer, 0, 3 * m_width * m_height*4 * sizeof(float));
+	else
+		memset(m_outBuffer, 0, 3 * m_width * m_height * sizeof(float));
 }
 
 void Renderer::ClearDepthBuffer() {
-	for (int y = 0; y < m_height; ++y) {
-		for (int x = 0; x < m_width; ++x) {
-			m_zbuffer[y * m_width + x] = -FLT_MAX;
+	if (antialiasing_mode)
+		for (int y = 0; y < m_height*2; ++y) {
+			for (int x = 0; x < m_width*2; ++x) {
+				m_aa_zbuffer[y * m_width*2 + x] = -FLT_MAX;
+			}
 		}
-	}
+	else
+		for (int y = 0; y < m_height; ++y) {
+			for (int x = 0; x < m_width; ++x) {
+				m_zbuffer[y * m_width + x] = -FLT_MAX;
+			}
+		}
 }
 
 inline GLfloat areaOfTriangle(const vec3& a, const vec3& b,const vec3& c)
@@ -363,7 +426,10 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 inline bool Renderer::IsInsideScreen(int x, int y)
 {
-	return (0 <= x && x < m_width && 0 <= y && y < m_height);
+	if (antialiasing_mode)
+		return (0 <= x && x < m_width*2 && 0 <= y && y < m_height*2);
+	else
+		return (0 <= x && x < m_width && 0 <= y && y < m_height);
 }
 
 
@@ -426,7 +492,11 @@ void Renderer::CreateOpenGLBuffer()
 
 void Renderer::SwapBuffers()
 {
-
+	if (antialiasing_mode)
+	{
+		antiAlias();
+	}
+		
 	int a = glGetError();
 	glActiveTexture(GL_TEXTURE0);
 	a = glGetError();

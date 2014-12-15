@@ -44,6 +44,8 @@ class Renderer
 {
 	float *m_outBuffer; // 3*width*height
 	float *m_zbuffer; // width*height
+	float *m_aa_outBuffer; //(3*width*height)*4
+	float *m_aa_zbuffer; //(width*height)*4
 	int m_width, m_height;
 	float camera_aspect_ratio;
 	mat4 viewTransform;
@@ -79,6 +81,7 @@ public:
 	bool draw_vertex_normals = false;
 	bool draw_bounding_box = false;
 	bool draw_fog = false;
+	bool antialiasing_mode = false;
 	///////////////////////////////////
 
 	Renderer();
@@ -99,4 +102,6 @@ public:
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
 	void setFog(Fog* f){ fog = f; };
+	GLfloat sumQuadPixels(int x, int y, const int& color);
+	void antiAlias();
 };
