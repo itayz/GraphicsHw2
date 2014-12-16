@@ -668,7 +668,7 @@ void effects(int id)
 		renderer->draw_fog = !renderer->draw_fog;
 		break;
 	case (AA) :
-		renderer->antialiasing_mode = !renderer->antialiasing_mode;
+		renderer->ToggleAntiAliasing();
 		break;
 	}
 	scene->draw(*renderer);

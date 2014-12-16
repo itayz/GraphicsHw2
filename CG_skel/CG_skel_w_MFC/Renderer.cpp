@@ -34,21 +34,19 @@ mat4 CreateNdcToScreenMatrix(int width, int height, float camera_aspect_ratio)
 }
 
 
-Renderer::Renderer() :m_width(512), m_height(512)
+Renderer::Renderer() :m_width(512), m_height(512), m_real_width(512), m_real_height(512)
 {
 	InitOpenGLRendering();
 	CreateBuffers(512,512);
-	ndcToScreen = CreateNdcToScreenMatrix(512, 512,1);
-	aa_ndcToScreen = CreateNdcToScreenMatrix(1024, 1024, 1);
+	ndcToScreen = CreateNdcToScreenMatrix(m_real_width, m_real_height, 1);
 }
-Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
+Renderer::Renderer(int width, int height) :m_width(width), m_height(height), m_real_width(width), m_real_height(height)
 {
 	InitOpenGLRendering();
 	CreateBuffers(width, height);
 	camera_aspect_ratio = width;
 	camera_aspect_ratio /= height;
-	ndcToScreen = CreateNdcToScreenMatrix(width, height, camera_aspect_ratio);
-	aa_ndcToScreen = CreateNdcToScreenMatrix(m_aa_width, m_aa_height, camera_aspect_ratio);
+	ndcToScreen = CreateNdcToScreenMatrix(m_real_width, m_real_height, camera_aspect_ratio);
 }
 
 
@@ -81,56 +79,27 @@ void Renderer::antiAlias() {
 
 float Renderer::GetPixelZValue(int x, int y)
 {
-	if (antialiasing_mode) {
-		return m_aa_zbuffer[x + y*m_aa_width];
-	}
-	else {
-		return m_zbuffer[x + y*m_width];
-	}
+	return m_real_zbuffer[x + y*m_real_width];
 }
 
 void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
 	static const vec4 fogColor(0.0, 0.0, 0.0, 1.0);
-	if (antialiasing_mode)
+	if (m_real_zbuffer[x + y*m_real_width] < z)
 	{
-		if (m_aa_zbuffer[x + y*m_aa_width] < z)
+		m_real_zbuffer[x + y*m_real_width] = z;
+		if (draw_fog)
 		{
-			m_aa_zbuffer[x + y*m_aa_width] = z;
-			if (draw_fog)
-			{
-				float t = (z - zFarLimit) * inverseZRange;
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = color.x * t + fogColor.x * (1 - t);
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = color.y * t + fogColor.y * (1 - t);
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = color.z * t + fogColor.z * (1 - t);
-			}
-			else
-			{
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = color.x;
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = color.y;
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = color.z;
-			}
+			float t = (z - zFarLimit) * inverseZRange;
+			m_real_outBuffer[INDEX(m_real_width, x, y, 0)] = color.x * t + fogColor.x * (1 - t);
+			m_real_outBuffer[INDEX(m_real_width, x, y, 1)] = color.y * t + fogColor.y * (1 - t);
+			m_real_outBuffer[INDEX(m_real_width, x, y, 2)] = color.z * t + fogColor.z * (1 - t);
 		}
-
-	}
-	else
-	{
-		if (m_zbuffer[x + y*m_width] < z)
+		else
 		{
-			m_zbuffer[x + y*m_width] = z;
-			if (draw_fog)
-			{
-				float t = (z - zFarLimit) * inverseZRange;
-				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x * t + fogColor.x * (1 - t);
-				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y * t + fogColor.y * (1 - t);
-				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z * t + fogColor.z * (1 - t);
-			}
-			else
-			{
-				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x;
-				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y;
-				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z;
-			}
+			m_real_outBuffer[INDEX(m_real_width, x, y, 0)] = color.x;
+			m_real_outBuffer[INDEX(m_real_width, x, y, 1)] = color.y;
+			m_real_outBuffer[INDEX(m_real_width, x, y, 2)] = color.z;
 		}
 	}
 }
@@ -284,6 +253,18 @@ void Renderer::CreateBuffers(int width, int height)
 	m_zbuffer = new float[m_width*m_height];
 	m_aa_outBuffer = new float[3 * m_aa_width*m_aa_height];
 	m_aa_zbuffer = new float[m_aa_width*m_aa_height];
+	if (antialiasing_mode) {
+		m_real_width = m_aa_width;
+		m_real_height = m_aa_height;
+		m_real_outBuffer = m_aa_outBuffer;
+		m_real_zbuffer = m_aa_zbuffer;
+	}
+	else {
+		m_real_width = m_width;
+		m_real_height = m_height;
+		m_real_outBuffer = m_outBuffer;
+		m_real_zbuffer = m_zbuffer;
+	}
 }
 
 void Renderer::SetCameraTransform(const mat4& cTransform)
@@ -312,10 +293,7 @@ void Renderer::SetObjectMatrices(const mat4& oTransform, const mat3& nTransform)
 void Renderer::AdjustToCameraAspectRatio(float camera_aspect_ratio)
 {
 	this->camera_aspect_ratio = camera_aspect_ratio;
-	if (antialiasing_mode)
-		aa_ndcToScreen = CreateNdcToScreenMatrix(m_aa_width, m_aa_height, camera_aspect_ratio);
-	else
-		ndcToScreen = CreateNdcToScreenMatrix(m_width, m_height, camera_aspect_ratio);
+	ndcToScreen = CreateNdcToScreenMatrix(m_real_width, m_real_height, camera_aspect_ratio);
 }
 
 void Renderer::UpdateScreenSize(int width, int height)
@@ -338,25 +316,15 @@ inline bool IsInsideNDC(const vec4& p) {
 }
 
 void Renderer::ClearColorBuffer() {
-	if (antialiasing_mode)
-		memset(m_aa_outBuffer, 0, 3 * m_aa_width * m_aa_height * sizeof(float));
-	else
-		memset(m_outBuffer, 0, 3 * m_width * m_height * sizeof(float));
+	memset(m_real_outBuffer, 0, 3 * m_real_width * m_real_height * sizeof(float));
 }
 
 void Renderer::ClearDepthBuffer() {
-	if (antialiasing_mode)
-		for (int y = 0; y < m_aa_height; ++y) {
-			for (int x = 0; x < m_aa_width; ++x) {
-				m_aa_zbuffer[y * m_aa_width + x] = -FLT_MAX;
-			}
+	for (int y = 0; y < m_real_height; ++y) {
+		for (int x = 0; x < m_real_width; ++x) {
+			m_real_zbuffer[y * m_real_width + x] = -FLT_MAX;
 		}
-	else
-		for (int y = 0; y < m_height; ++y) {
-			for (int x = 0; x < m_width; ++x) {
-				m_zbuffer[y * m_width + x] = -FLT_MAX;
-			}
-		}
+	}
 }
 
 void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material, vec4& color)
@@ -433,11 +401,7 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, const ModelMaterial* material)
 {
-	ScanLines scanLines(m_height);
-	if (antialiasing_mode)
-	{
-		scanLines.set_xLimits(m_aa_height);
-	}
+	ScanLines scanLines(m_real_height);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -484,19 +448,9 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 		// doing some very tough clipping...
 		if (IsInsideNDC(p1) && IsInsideNDC(p2) && IsInsideNDC(p3)) {
-			if (antialiasing_mode)
-			{
-				p1 = aa_ndcToScreen * p1;
-				p2 = aa_ndcToScreen * p2;
-				p3 = aa_ndcToScreen * p3;
-			}
-			else
-			{
-				p1 = ndcToScreen * p1;
-				p2 = ndcToScreen * p2;
-				p3 = ndcToScreen * p3;
-			}
-			
+			p1 = ndcToScreen * p1;
+			p2 = ndcToScreen * p2;
+			p3 = ndcToScreen * p3;
 			if (shadingType == FLAT_SHADING || !v_normals) {
 				vec3 avgPosition(w1);
 				avgPosition += w2;
@@ -585,10 +539,7 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 inline bool Renderer::IsInsideScreen(int x, int y)
 {
-	if (antialiasing_mode)
-		return (0 <= x && x < m_aa_width && 0 <= y && y < m_aa_height);
-	else
-		return (0 <= x && x < m_width && 0 <= y && y < m_height);
+	return (0 <= x && x < m_real_width && 0 <= y && y < m_real_height);
 }
 
 
@@ -600,6 +551,24 @@ void Renderer::SetShadingType(SHADING_TYPES shading)
 void Renderer::SetEye(const vec3& eye)
 {
 	this->eye = eye;
+}
+
+void Renderer::ToggleAntiAliasing()
+{
+	if (antialiasing_mode) {
+		m_real_width = m_width;
+		m_real_height = m_height;
+		m_real_outBuffer = m_outBuffer;
+		m_real_zbuffer = m_zbuffer;
+	}
+	else {
+		m_real_width = m_aa_width;
+		m_real_height = m_aa_height;
+		m_real_outBuffer = m_aa_outBuffer;
+		m_real_zbuffer = m_aa_zbuffer;
+	}
+	ndcToScreen = CreateNdcToScreenMatrix(m_real_width, m_real_height, camera_aspect_ratio);
+	antialiasing_mode = !antialiasing_mode;
 }
 
 /////////////////////////////////////////////////////
@@ -771,19 +740,9 @@ void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
 		bool p1InsideNDC = IsInsideNDC(tail);
 		bool p2InsideNDC = IsInsideNDC(end);
 		bool p3InsideNDC = IsInsideNDC(end);
-		ScanLines scanLines(m_height);
-		if (antialiasing_mode)
-		{
-			tail = aa_ndcToScreen * tail;
-			end = aa_ndcToScreen * end;
-			scanLines.set_xLimits(m_aa_height);
-		}
-		else
-		{
-			tail = ndcToScreen * tail;
-			end = ndcToScreen * end;
-		}
-		
+		ScanLines scanLines(m_real_height);
+		tail = ndcToScreen * tail;
+		end = ndcToScreen * end;
 		vec4 p1 = tail, p2 = end, p3 = end;
 		vec3 _p1 = vec3(p1.x, p1.y, p1z);
 		vec3 _p2 = vec3(p2.x, p2.y, p2z);
@@ -827,19 +786,9 @@ void Renderer::DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>
 		bool p1InsideNDC = IsInsideNDC(tail);
 		bool p2InsideNDC = IsInsideNDC(end);
 		bool p3InsideNDC = IsInsideNDC(end);
-		ScanLines scanLines(m_height);
-		if (antialiasing_mode)
-		{
-			tail = aa_ndcToScreen * tail;
-			end = aa_ndcToScreen * end;
-			scanLines.set_xLimits(m_aa_height);
-		}
-		else
-		{
-			tail = ndcToScreen * tail;
-			end = ndcToScreen * end;
-		}
-		
+		ScanLines scanLines(m_real_height);
+		tail = ndcToScreen * tail;
+		end = ndcToScreen * end;
 		vec4 p1=tail, p2=end, p3=end;
 		vec3 _p1 = vec3(p1.x, p1.y, p1z);
 		vec3 _p2 = vec3(p2.x, p2.y, p2z);

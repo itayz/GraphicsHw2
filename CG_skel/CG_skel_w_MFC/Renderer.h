@@ -52,11 +52,13 @@ class Renderer
 	float *m_zbuffer; // width*height
 	float *m_aa_outBuffer; //(3*width*height)*4
 	float *m_aa_zbuffer; //(width*height)*4
-	int m_width, m_height,m_aa_width,m_aa_height;
+	float *m_real_outBuffer;
+	float *m_real_zbuffer;
+	int m_width, m_height, m_aa_width, m_aa_height, m_real_width, m_real_height;
 	float camera_aspect_ratio;
 	mat4 viewTransform;
 	mat4 projection;
-	mat4 ndcToScreen,aa_ndcToScreen;
+	mat4 ndcToScreen;
 	mat4 oTransform;
 	mat3 nTransform;
 	vector<LightSource> lightSources;
@@ -115,4 +117,5 @@ public:
 	void antiAlias();
 	void SetShadingType(SHADING_TYPES shading);
 	void SetEye(const vec3& eye);
+	void ToggleAntiAliasing();
 };
