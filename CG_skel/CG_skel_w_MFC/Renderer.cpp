@@ -20,6 +20,7 @@ mat4 CreateNdcToScreenMatrix(int width, int height, float camera_aspect_ratio)
 		float halfWidth = width;
 		halfWidth /= 2;
 		ndcToScreen = Translate(halfWidth - widthScale - 0.5, 0, 0) * Scale(widthScale, heightScale, 1) * Translate(1, 1, 0) * ndcToScreen;
+		ndcToScreen = Translate(halfWidth - widthScale - 0.5, 0, 0) * Scale(widthScale, heightScale, 1) * Translate(1, 1, 0) * ndcToScreen;
 	}
 	else {
 		widthScale = width - 1;
@@ -425,11 +426,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	ScanLines scanLines(m_height);
 	if (antialiasing_mode)
 	{
-		//AdjustToCameraAspectRatio(1);
-		scanLines = ScanLines(m_aa_height);
+		scanLines.set_xLimits(m_aa_height);
 	}
-
-	//ScanLines scanLines(m_height);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -664,10 +662,7 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
 	a = glGetError();
-	//if (antialiasing_mode)
-		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 2*m_width, 2*m_height, GL_RGB, GL_FLOAT, m_aa_outBuffer);
-	//else
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,  m_width,  m_height, GL_RGB, GL_FLOAT, m_outBuffer);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,  m_width,  m_height, GL_RGB, GL_FLOAT, m_outBuffer);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	a = glGetError();
 
@@ -766,9 +761,19 @@ void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
 		bool p1InsideNDC = IsInsideNDC(tail);
 		bool p2InsideNDC = IsInsideNDC(end);
 		bool p3InsideNDC = IsInsideNDC(end);
-		tail = ndcToScreen * tail;
-		end = ndcToScreen * end;
 		ScanLines scanLines(m_height);
+		if (antialiasing_mode)
+		{
+			tail = aa_ndcToScreen * tail;
+			end = aa_ndcToScreen * end;
+			scanLines.set_xLimits(m_aa_height);
+		}
+		else
+		{
+			tail = ndcToScreen * tail;
+			end = ndcToScreen * end;
+		}
+		
 		vec4 p1 = tail, p2 = end, p3 = end;
 		vec3 _p1 = vec3(p1.x, p1.y, p1z);
 		vec3 _p2 = vec3(p2.x, p2.y, p2z);
@@ -812,13 +817,19 @@ void Renderer::DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>
 		bool p1InsideNDC = IsInsideNDC(tail);
 		bool p2InsideNDC = IsInsideNDC(end);
 		bool p3InsideNDC = IsInsideNDC(end);
-		tail = ndcToScreen * tail;
-		end = ndcToScreen * end;
-		//if (tailInsideNDC && endInsideNDC)
-		//{
-		//	DrawLine(tail[0], tail[1], end[0], end[1], RED);
-		//}
 		ScanLines scanLines(m_height);
+		if (antialiasing_mode)
+		{
+			tail = aa_ndcToScreen * tail;
+			end = aa_ndcToScreen * end;
+			scanLines.set_xLimits(m_aa_height);
+		}
+		else
+		{
+			tail = ndcToScreen * tail;
+			end = ndcToScreen * end;
+		}
+		
 		vec4 p1=tail, p2=end, p3=end;
 		vec3 _p1 = vec3(p1.x, p1.y, p1z);
 		vec3 _p2 = vec3(p2.x, p2.y, p2z);

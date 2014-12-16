@@ -15,12 +15,16 @@ struct ScanLines
 	int yMin, yMax;
 	int *xLimits;
 
-	ScanLines(int screenHeight) {
+	ScanLines(int& screenHeight) {
 		xLimits = new int[screenHeight * 2];
 	}
-
+	void set_xLimits(int& screenHeight)
+	{
+		delete xLimits;
+		xLimits = new int[screenHeight * 2];
+	}
 	~ScanLines() {
-		//delete xLimits;
+		delete xLimits;
 	}
 
 	void ResetLimits() {
