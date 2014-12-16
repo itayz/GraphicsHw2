@@ -355,8 +355,9 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 {
 	vec3 v = eye;
 	v -= p;
-	vec3 l, half;
-	vec4 noColor(0.0, 0.0, 0.0, 1.0), ambient, diffuse, specular;
+	static vec3 l, half;
+	static const vec4 noColor(0.0, 0.0, 0.0, 1.0);
+	static vec4 ambient, diffuse, specular;
 	color = noColor;
 	float d, s, distance, distanceAttenuation;
 	for (int i = 0; i < lightSources.size(); ++i) {
@@ -365,11 +366,6 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 		switch (lightSource.sourceType) {
 		case POINT_LIGHT:
 			l -= p;
-			distance = length(l);
-			distanceAttenuation = lightSource.constantAttenuation;
-			distanceAttenuation += lightSource.linearAttenuation * distance;
-			distanceAttenuation += lightSource.quadraticAttenuation * (distance * distance);
-			distanceAttenuation = 1 / distanceAttenuation;
 			break;
 		case PARALLEL_LIGHT:
 			l *= -1;
@@ -377,11 +373,22 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 		}
 		ambient = lightSource.ambient;
 		ambient *= material.ambient;
+		color += ambient;
 		d = dot(n, l);
 		if (d > 0) {
+			if (lightSource.sourceType == POINT_LIGHT) {
+				distance = length(l);
+				distanceAttenuation = lightSource.constantAttenuation;
+				distanceAttenuation += lightSource.linearAttenuation * distance;
+				distanceAttenuation += lightSource.quadraticAttenuation * distance * distance;
+				distanceAttenuation = 1 / distanceAttenuation;
+			}
+			else if (lightSource.sourceType == PARALLEL_LIGHT) {
+				distance = length(l);
+			}
 			diffuse = lightSource.diffuse;
 			diffuse *= material.diffuse;
-			diffuse *= (d / length(l));
+			diffuse *= (d / distance);
 			half = l;
 			half += v;
 			s = dot(half, n);
@@ -393,18 +400,13 @@ void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const
 			else {
 				specular = noColor;
 			}
+			if (lightSource.sourceType == POINT_LIGHT) {
+				diffuse *= distanceAttenuation;
+				specular *= distanceAttenuation;
+			}
+			color += diffuse;
+			color += specular;
 		}
-		else {
-			diffuse = noColor;
-			specular = noColor;
-		}
-		if (lightSource.sourceType == POINT_LIGHT) {
-			diffuse *= distanceAttenuation;
-			specular *= distanceAttenuation;
-		}
-		color += ambient;
-		color += diffuse;
-		color += specular;
 	}
 	color += material.emission;
 	if (color.x > 1) {
@@ -433,8 +435,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	transform.multiply(viewTransform);
 	transform.multiply(oTransform);
 	// Draw all the triangles
-	vec4 pixelColor = vec4(0.5, 0.9, 0.9, 1);
-	vec4 uColor, vColor, wColor;
+	static vec4 pixelColor = vec4(0.5, 0.9, 0.9, 1);
+	static vec4 uColor, vColor, wColor;
 	switch (color) {
 	case WHITE:
 		pixelColor = { 1, 1, 1, 1 };
@@ -537,12 +539,12 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 						}
 						vec3 point = w1;
 						point *= weights.x;
-						point += weights.y * w2;
-						point += weights.z * w3;
+						point += w2 * weights.y;
+						point += w3 * weights.z;
 						vec3 pointNormal = n1;
 						pointNormal *= weights.x;
-						pointNormal += weights.y * n2;
-						pointNormal += weights.z * n3;
+						pointNormal += n2 * weights.y;
+						pointNormal += n3 * weights.z;
 						pointNormal /= length(pointNormal);
 						if (material->uniform) {
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
