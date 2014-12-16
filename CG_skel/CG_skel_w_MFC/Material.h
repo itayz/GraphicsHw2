@@ -32,6 +32,15 @@ struct Material {
 		shininess *= s;
 	}
 
+	Material& operator += (const Material& m)
+	{
+		ambient += m.ambient;
+		diffuse += m.diffuse;
+		specular += m.specular;
+		emission += m.emission;
+		shininess += m.shininess;
+	}
+
 	friend Material operator * (const GLfloat s, const Material& m)
 	{
 		return m * s;

@@ -523,7 +523,10 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
 						}
 						else {
-							Material avgMaterial = material->materials[0] * weights.x + material->materials[1] * weights.y + material->materials[2] * weights.z;
+							Material avgMaterial = material->materials[0];
+							avgMaterial *= weights.x;
+							avgMaterial += material->materials[1] * weights.y;
+							avgMaterial += material->materials[2] * weights.z;
 							ShadingColor(point, eye, pointNormal, avgMaterial, pixelColor);
 						}
 						DrawPixel(x, y, z, pixelColor);
