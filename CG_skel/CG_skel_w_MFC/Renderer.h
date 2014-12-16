@@ -20,7 +20,7 @@ struct ScanLines
 	}
 
 	~ScanLines() {
-		delete xLimits;
+		//delete xLimits;
 	}
 
 	void ResetLimits() {
@@ -49,11 +49,11 @@ class Renderer
 	float *m_zbuffer; // width*height
 	float *m_aa_outBuffer; //(3*width*height)*4
 	float *m_aa_zbuffer; //(width*height)*4
-	int m_width, m_height;
+	int m_width, m_height,m_aa_width,m_aa_height;
 	float camera_aspect_ratio;
 	mat4 viewTransform;
 	mat4 projection;
-	mat4 ndcToScreen;
+	mat4 ndcToScreen,aa_ndcToScreen;
 	mat4 oTransform;
 	mat3 nTransform;
 	vector<LightSource> lightSources;

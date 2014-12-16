@@ -38,6 +38,7 @@ Renderer::Renderer() :m_width(512), m_height(512)
 	InitOpenGLRendering();
 	CreateBuffers(512,512);
 	ndcToScreen = CreateNdcToScreenMatrix(512, 512,1);
+	aa_ndcToScreen = CreateNdcToScreenMatrix(1024, 1024, 1);
 }
 Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 {
@@ -45,11 +46,11 @@ Renderer::Renderer(int width, int height) :m_width(width), m_height(height)
 	CreateBuffers(width, height);
 	camera_aspect_ratio = width;
 	camera_aspect_ratio /= height;
-	if (antialiasing_mode)
-		ndcToScreen = CreateNdcToScreenMatrix(width*2, height*2, camera_aspect_ratio);
-	else
-		ndcToScreen = CreateNdcToScreenMatrix(width, height, camera_aspect_ratio);
+	ndcToScreen = CreateNdcToScreenMatrix(width, height, camera_aspect_ratio);
+	aa_ndcToScreen = CreateNdcToScreenMatrix(m_aa_width, m_aa_height, camera_aspect_ratio);
 }
+
+
 
 Renderer::~Renderer(void)
 {
@@ -59,10 +60,10 @@ GLfloat Renderer::sumQuadPixels(int x, int y, const int& color) {
 	float k = 0;
 	x *= 2; 
 	y *= 2;
-	k += m_aa_outBuffer[INDEX(m_width * 2, x, y, color)];
-	k += m_aa_outBuffer[INDEX(m_width * 2, x + 1, y, color)];
-	k += m_aa_outBuffer[INDEX(m_width * 2, x, y + 1, color)];
-	k += m_aa_outBuffer[INDEX(m_width * 2, x + 1, y + 1, color)];
+	k += m_aa_outBuffer[INDEX(m_aa_width, x, y, color)];
+	k += m_aa_outBuffer[INDEX(m_aa_width, x + 1, y, color)];
+	k += m_aa_outBuffer[INDEX(m_aa_width, x, y + 1, color)];
+	k += m_aa_outBuffer[INDEX(m_aa_width, x + 1, y + 1, color)];
 	k /= 4;
 	return k;
 }
@@ -80,7 +81,7 @@ void Renderer::antiAlias() {
 float Renderer::GetPixelZValue(int x, int y)
 {
 	if (antialiasing_mode) {
-		return m_aa_zbuffer[x + y*m_width * 2];
+		return m_aa_zbuffer[x + y*m_aa_width];
 	}
 	else {
 		return m_zbuffer[x + y*m_width];
@@ -91,21 +92,21 @@ void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
 	if (antialiasing_mode)
 	{
-		if (m_aa_zbuffer[x + y*m_width*2] < z)
+		if (m_aa_zbuffer[x + y*m_aa_width] < z)
 		{
-			m_aa_zbuffer[x + y*m_width*2] = z;
+			m_aa_zbuffer[x + y*m_aa_width] = z;
 			if (draw_fog)
 			{
 				vec4 c = this->fog->draw(z, color);
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 0)] = c.x;
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 1)] = c.y;
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 2)] = c.z;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = c.x;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = c.y;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = c.z;
 			}
 			else
 			{
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 0)] = color.x;
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 1)] = color.y;
-				m_aa_outBuffer[INDEX(m_width*2, x, y, 2)] = color.z;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = color.x;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = color.y;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = color.z;
 			}
 		}
 
@@ -273,12 +274,14 @@ void Renderer::BresenhamAlgorithm(int x1, int y1, int x2, int y2, ScanLines& sca
 void Renderer::CreateBuffers(int width, int height)
 {
 	m_width=width;
-	m_height=height;	
+	m_height=height;
+	m_aa_width = 2 * width;
+	m_aa_height = 2 * height;
 	CreateOpenGLBuffer(); //Do not remove this line.
 	m_outBuffer = new float[3*m_width*m_height];
 	m_zbuffer = new float[m_width*m_height];
-	m_aa_outBuffer = new float[3 * m_width*m_height*4];
-	m_aa_zbuffer = new float[m_width*m_height*4];
+	m_aa_outBuffer = new float[3 * m_aa_width*m_aa_height];
+	m_aa_zbuffer = new float[m_aa_width*m_aa_height];
 }
 
 void Renderer::SetCameraTransform(const mat4& cTransform)
@@ -301,7 +304,7 @@ void Renderer::AdjustToCameraAspectRatio(float camera_aspect_ratio)
 {
 	this->camera_aspect_ratio = camera_aspect_ratio;
 	if (antialiasing_mode)
-		ndcToScreen = CreateNdcToScreenMatrix(m_width*2, m_height*2, camera_aspect_ratio);
+		aa_ndcToScreen = CreateNdcToScreenMatrix(m_aa_width, m_aa_height, camera_aspect_ratio);
 	else
 		ndcToScreen = CreateNdcToScreenMatrix(m_width, m_height, camera_aspect_ratio);
 }
@@ -327,16 +330,16 @@ inline bool IsInsideNDC(const vec4& p) {
 
 void Renderer::ClearColorBuffer() {
 	if (antialiasing_mode)
-		memset(m_aa_outBuffer, 0, 3 * m_width * m_height*4 * sizeof(float));
+		memset(m_aa_outBuffer, 0, 3 * m_aa_width * m_aa_height * sizeof(float));
 	else
 		memset(m_outBuffer, 0, 3 * m_width * m_height * sizeof(float));
 }
 
 void Renderer::ClearDepthBuffer() {
 	if (antialiasing_mode)
-		for (int y = 0; y < m_height*2; ++y) {
-			for (int x = 0; x < m_width*2; ++x) {
-				m_aa_zbuffer[y * m_width*2 + x] = -FLT_MAX;
+		for (int y = 0; y < m_aa_height; ++y) {
+			for (int x = 0; x < m_aa_width; ++x) {
+				m_aa_zbuffer[y * m_aa_width + x] = -FLT_MAX;
 			}
 		}
 	else
@@ -420,6 +423,13 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	const vector<vec3>* v_normals, const vector<vec3>* f_normals, COLORS color, const ModelMaterial* material)
 {
 	ScanLines scanLines(m_height);
+	if (antialiasing_mode)
+	{
+		//AdjustToCameraAspectRatio(1);
+		scanLines = ScanLines(m_aa_height);
+	}
+
+	//ScanLines scanLines(m_height);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -466,9 +476,19 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 
 		// doing some very tough clipping...
 		if (IsInsideNDC(p1) && IsInsideNDC(p2) && IsInsideNDC(p3)) {
-			p1 = ndcToScreen * p1;
-			p2 = ndcToScreen * p2;
-			p3 = ndcToScreen * p3;
+			if (antialiasing_mode)
+			{
+				p1 = aa_ndcToScreen * p1;
+				p2 = aa_ndcToScreen * p2;
+				p3 = aa_ndcToScreen * p3;
+			}
+			else
+			{
+				p1 = ndcToScreen * p1;
+				p2 = ndcToScreen * p2;
+				p3 = ndcToScreen * p3;
+			}
+			
 			if (shadingType == FLAT_SHADING || !v_normals) {
 				vec3 avgPosition(w1);
 				avgPosition += w2;
@@ -548,7 +568,7 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 inline bool Renderer::IsInsideScreen(int x, int y)
 {
 	if (antialiasing_mode)
-		return (0 <= x && x < m_width*2 && 0 <= y && y < m_height*2);
+		return (0 <= x && x < m_aa_width && 0 <= y && y < m_aa_height);
 	else
 		return (0 <= x && x < m_width && 0 <= y && y < m_height);
 }
@@ -623,6 +643,7 @@ void Renderer::CreateOpenGLBuffer()
 
 void Renderer::SwapBuffers()
 {
+	
 	if (antialiasing_mode)
 	{
 		antiAlias();
@@ -633,7 +654,10 @@ void Renderer::SwapBuffers()
 	a = glGetError();
 	glBindTexture(GL_TEXTURE_2D, gScreenTex);
 	a = glGetError();
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGB, GL_FLOAT, m_outBuffer);
+	//if (antialiasing_mode)
+		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 2*m_width, 2*m_height, GL_RGB, GL_FLOAT, m_aa_outBuffer);
+	//else
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,  m_width,  m_height, GL_RGB, GL_FLOAT, m_outBuffer);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	a = glGetError();
 
