@@ -525,6 +525,7 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 						pointNormal *= weights.x;
 						pointNormal += weights.y * n2;
 						pointNormal += weights.z * n3;
+						pointNormal /= length(pointNormal);
 						if (material->uniform) {
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
 						}
