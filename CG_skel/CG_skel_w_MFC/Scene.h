@@ -38,6 +38,7 @@ class Camera {
 	mat4 view;
 	float aspect_ratio;
 
+	ModelMaterial material;
 	vector<vec3> model;
 
 	float left, right, bottom, top, zNear, zFar, fovy, aspect, zoom;

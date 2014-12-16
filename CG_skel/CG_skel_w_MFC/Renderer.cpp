@@ -20,7 +20,6 @@ mat4 CreateNdcToScreenMatrix(int width, int height, float camera_aspect_ratio)
 		float halfWidth = width;
 		halfWidth /= 2;
 		ndcToScreen = Translate(halfWidth - widthScale - 0.5, 0, 0) * Scale(widthScale, heightScale, 1) * Translate(1, 1, 0) * ndcToScreen;
-		ndcToScreen = Translate(halfWidth - widthScale - 0.5, 0, 0) * Scale(widthScale, heightScale, 1) * Translate(1, 1, 0) * ndcToScreen;
 	}
 	else {
 		widthScale = width - 1;

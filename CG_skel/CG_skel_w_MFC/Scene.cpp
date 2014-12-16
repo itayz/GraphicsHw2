@@ -163,7 +163,7 @@ void Camera::Draw(Renderer& renderer, COLORS color)
 {
 	mat3 identity;
 	renderer.SetObjectMatrices(cTransform, identity);
-	renderer.DrawTriangles(&model, NULL, NULL, color);
+	renderer.DrawTriangles(&model, NULL, NULL, color, &material);
 }
 
 void Camera::UpdateProjection()
