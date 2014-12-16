@@ -84,7 +84,7 @@ float Renderer::GetPixelZValue(int x, int y)
 
 void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
-	static const vec4 fogColor(0.0, 0.0, 0.0, 1.0);
+	static const vec3 fogColor(0.0, 0.0, 0.0);
 	if (m_real_zbuffer[x + y*m_real_width] < z)
 	{
 		m_real_zbuffer[x + y*m_real_width] = z;
