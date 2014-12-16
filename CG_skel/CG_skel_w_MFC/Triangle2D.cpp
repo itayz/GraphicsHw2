@@ -68,11 +68,11 @@ void Triangle2D::Barycentric(int x, int y, vec3& weights) {
 		}
 		else {
 			float w1, w2, w3;
-			w1 = sqrt((x1 - x) * (x1 - x) + (y1 - y) * (y1 - y));
+			w1 = abs(x1 - x) + abs(y1 - y);
 			w1 = 1 / w1;
-			w2 = sqrt((x2 - x) * (x2 - x) + (y2 - y) * (y2 - y));
+			w2 = abs(x2 - x) + abs(y2 - y);
 			w2 = 1 / w2;
-			w3 = sqrt((x3 - x) * (x3 - x) + (y3 - y) * (y3 - y));
+			w3 = abs(x3 - x) + abs(y3 - y);
 			w3 = 1 / w3;
 			float inverseTotalWeights = w1 + w2 + w3;
 			inverseTotalWeights = 1 / inverseTotalWeights;
