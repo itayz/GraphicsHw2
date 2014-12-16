@@ -91,6 +91,7 @@ float Renderer::GetPixelZValue(int x, int y)
 
 void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 {
+	static const vec4 fogColor(0.0, 0.0, 0.0, 1.0);
 	if (antialiasing_mode)
 	{
 		if (m_aa_zbuffer[x + y*m_aa_width] < z)
@@ -98,10 +99,10 @@ void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 			m_aa_zbuffer[x + y*m_aa_width] = z;
 			if (draw_fog)
 			{
-				vec4 c = this->fog->draw(z, color);
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = c.x;
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = c.y;
-				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = c.z;
+				float t = (z - zFarLimit) * inverseZRange;
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 0)] = color.x * t + fogColor.x * (1 - t);
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 1)] = color.y * t + fogColor.y * (1 - t);
+				m_aa_outBuffer[INDEX(m_aa_width, x, y, 2)] = color.z * t + fogColor.z * (1 - t);
 			}
 			else
 			{
@@ -119,10 +120,10 @@ void Renderer::DrawPixel(int x, int y, float z, const vec4& color)
 			m_zbuffer[x + y*m_width] = z;
 			if (draw_fog)
 			{
-				vec4 c = this->fog->draw(z, color);
-				m_outBuffer[INDEX(m_width, x, y, 0)] = c.x;
-				m_outBuffer[INDEX(m_width, x, y, 1)] = c.y;
-				m_outBuffer[INDEX(m_width, x, y, 2)] = c.z;
+				float t = (z - zFarLimit) * inverseZRange;
+				m_outBuffer[INDEX(m_width, x, y, 0)] = color.x * t + fogColor.x * (1 - t);
+				m_outBuffer[INDEX(m_width, x, y, 1)] = color.y * t + fogColor.y * (1 - t);
+				m_outBuffer[INDEX(m_width, x, y, 2)] = color.z * t + fogColor.z * (1 - t);
 			}
 			else
 			{
@@ -290,9 +291,16 @@ void Renderer::SetCameraTransform(const mat4& cTransform)
 	this->viewTransform = cTransform;
 }
 
-void Renderer::SetProjection(const mat4& projection)
+void Renderer::SetProjectionAndZLimits(const mat4& projection, const float cameraZFar, const float cameraZNear)
 {
+	static vec4 v(0.0, 0.0, 0.0, 1.0);
 	this->projection = projection;
+	v.z = cameraZFar;
+	this->zFarLimit = (this->projection * v).z;
+	v.z = cameraZNear;
+	this->zNearLimit = (this->projection * v).z;
+	inverseZRange = 1;
+	inverseZRange /= zNearLimit - zFarLimit;
 }
 
 void Renderer::SetObjectMatrices(const mat4& oTransform, const mat3& nTransform)

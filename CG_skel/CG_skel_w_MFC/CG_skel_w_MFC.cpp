@@ -35,7 +35,6 @@ enum MENU_ITEMS {
 #include <string>
 #include "PrimMeshModel.h"
 #include "InputDialog.h"
-#include "Fog.h"
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 
 
@@ -663,13 +662,10 @@ void lightType(int id)
 
 void effects(int id)
 {
-	Fog* fog; 
 	switch (id)
 	{
 	case (FOG) :
-		fog = new Fog(scene->getActiveCamera()->getzNear(), scene->getActiveCamera()->getzFar(), { 0.83f, 0.83f, 0.83f });
 		renderer->draw_fog = !renderer->draw_fog;
-		renderer->setFog(fog);
 		break;
 	case (AA) :
 		renderer->antialiasing_mode = !renderer->antialiasing_mode;

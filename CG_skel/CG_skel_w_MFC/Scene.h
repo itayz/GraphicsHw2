@@ -69,8 +69,8 @@ public:
 	void TranslateInFocusDirection(float distance);
 	void TranslateInRightDirection(float distance);
 	void FocusOnPoint(const vec3& p);
-	float* getzNear(){ return &zNear; };
-	float* getzFar(){ return &zFar; };
+	float GetZNear(){ return zNear; };
+	float GetZFar(){ return zFar; };
 };
 
 class Scene {

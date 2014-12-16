@@ -6,7 +6,6 @@
 #include "GL/glew.h"
 #include "LightSource.h"
 #include "Material.h"
-#include "Fog.h"
 
 using namespace std;
 
@@ -61,9 +60,9 @@ class Renderer
 	mat4 oTransform;
 	mat3 nTransform;
 	vector<LightSource> lightSources;
-	Fog* fog;
 	SHADING_TYPES shadingType = FLAT_SHADING;
 	vec3 eye;
+	float zFarLimit, zNearLimit, inverseZRange;
 
 	const float	normal_length = 0.3f; //normal scale for presentation.
 	void CreateBuffers(int width, int height);
@@ -104,7 +103,7 @@ public:
 	void DrawFaceNormals(const vector<vec3>* f_normals);
 	void DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>* v_normals);
 	void SetCameraTransform(const mat4& cTransform);
-	void SetProjection(const mat4& projection);
+	void SetProjectionAndZLimits(const mat4& projection, const float cameraZFar, const float cameraZNear);
 	void SetObjectMatrices(const mat4& oTransform, const mat3& nTransform);
 	void AdjustToCameraAspectRatio(float camera_aspect_ratio);
 	void SetLightSources(const vector<LightSource>* light_sources);
@@ -112,7 +111,6 @@ public:
 	void SwapBuffers();
 	void ClearColorBuffer();
 	void ClearDepthBuffer();
-	void setFog(Fog* f){ fog = f; };
 	GLfloat sumQuadPixels(int x, int y, const int& color);
 	void antiAlias();
 	void SetShadingType(SHADING_TYPES shading);

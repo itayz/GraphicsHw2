@@ -295,7 +295,7 @@ void Scene::draw(Renderer &renderer)
 {
 	// 1. Send the renderer the current camera transform and the projection
 	Camera *camera = cameras[activeCamera];
-	m_renderer->SetProjection(camera->GetProjection());
+	m_renderer->SetProjectionAndZLimits(camera->GetProjection(), camera->GetZFar() , camera->GetZNear());
 	m_renderer->SetCameraTransform(camera->GetTransform());
 	m_renderer->ClearColorBuffer();
 	m_renderer->ClearDepthBuffer();
