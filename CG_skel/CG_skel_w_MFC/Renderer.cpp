@@ -537,13 +537,23 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 						if (z <= GetPixelZValue(x, y)) {
 							continue;
 						}
-						vec3 point = weights.x * w1 + weights.y * w2 + weights.z * w3;
-						vec3 pointNormal = weights.x * n1 + weights.y * n2 + weights.z * n3;
+						vec3 point = w1;
+						point *= weights.x;
+						point += weights.y * w2;
+						point += weights.z * w3;
+						vec3 pointNormal = n1;
+						pointNormal *= weights.x;
+						pointNormal += weights.y * n2;
+						pointNormal += weights.z * n3;
+						pointNormal /= length(pointNormal);
 						if (material->uniform) {
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
 						}
 						else {
-							Material avgMaterial = material->materials[0] * weights.x + material->materials[1] * weights.y + material->materials[2] * weights.z;
+							Material avgMaterial = material->materials[0];
+							avgMaterial *= weights.x;
+							avgMaterial += material->materials[1] * weights.y;
+							avgMaterial += material->materials[2] * weights.z;
 							ShadingColor(point, eye, pointNormal, avgMaterial, pixelColor);
 						}
 						DrawPixel(x, y, z, pixelColor);

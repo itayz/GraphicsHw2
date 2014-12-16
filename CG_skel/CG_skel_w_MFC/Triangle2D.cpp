@@ -16,10 +16,6 @@ Triangle2D::Triangle2D(int x1, int y1, int x2, int y2, int x3, int y3)
 		isTriangle = false;
 		if (x1 != x2 || x2 != x3 || y1 != y2 || y2 != y3) {
 			isLine = true;
-			int v2x = x2 - x3;
-			int v2y = y2 - y3;
-			inverseLineLength = sqrt(v0x * v0x + v0y * v0y) + sqrt(v1x * v1x + v1y * v1y) + sqrt(v2x * v2x + v2y * v2y);
-			inverseLineLength = 2 / inverseLineLength;
 		}
 		else {
 			isPoint = true;
@@ -36,10 +32,54 @@ void Triangle2D::Barycentric(int x, int y, vec3& weights) {
 		weights.x = 1.0 - weights.y - weights.z;
 	}
 	else if (isLine) {
-		weights.x = 1 - inverseLineLength * sqrt((x1 - x) * (x1 - x) + (y1 - y) * (y1 - y));
-		weights.y = 1 - inverseLineLength * sqrt((x2 - x) * (x2 - x) + (y2 - y) * (y2 - y));
-		weights.z = 1 - inverseLineLength * sqrt((x3 - x) * (x3 - x) + (y3 - y) * (y3 - y));
-		weights /= length(weights);
+		if (x == x1 && y == y1) {
+			if (x == x2 && y == y2) {
+				weights.x = 0.5;
+				weights.y = 0.5;
+				weights.z = 0.0;
+			}
+			else if (x == x3 && y == y3) {
+				weights.x = 0.5;
+				weights.y = 0.0;
+				weights.z = 0.5;
+			}
+			else {
+				weights.x = 1.0;
+				weights.y = 0.0;
+				weights.z = 0.0;
+			}
+		}
+		else if (x == x2 && y == y2) {
+			if (x == x3 && y == y3) {
+				weights.x = 0.0;
+				weights.y = 0.5;
+				weights.z = 0.5;
+			}
+			else {
+				weights.x = 0.0;
+				weights.y = 1.0;
+				weights.z = 0.0;
+			}
+		}
+		else if (x == x3 && y == y3) {
+			weights.x = 0.0;
+			weights.y = 0.0;
+			weights.z = 1.0;
+		}
+		else {
+			float w1, w2, w3;
+			w1 = abs(x1 - x) + abs(y1 - y);
+			w1 = 1 / w1;
+			w2 = abs(x2 - x) + abs(y2 - y);
+			w2 = 1 / w2;
+			w3 = abs(x3 - x) + abs(y3 - y);
+			w3 = 1 / w3;
+			float inverseTotalWeights = w1 + w2 + w3;
+			inverseTotalWeights = 1 / inverseTotalWeights;
+			weights.x = w1 * inverseTotalWeights;
+			weights.y = w2 * inverseTotalWeights;
+			weights.z = 1.0 - weights.x - weights.y;
+		}
 	}
 	else {
 		weights.y = 1;
