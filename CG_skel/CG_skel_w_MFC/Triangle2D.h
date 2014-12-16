@@ -6,7 +6,6 @@ class Triangle2D
 	bool isPoint, isLine, isTriangle;
 	int v0x, v0y, v1x, v1y, den;
 	float inverseDen;
-	float inverseLineLength;
 
 public:
 	Triangle2D(int x1, int y1, int x2, int y2, int x3, int y3);
