@@ -30,6 +30,7 @@ struct Material {
 		specular *= s;
 		emission *= s;
 		shininess *= s;
+		return *this;
 	}
 
 	Material& operator += (const Material& m)
@@ -39,6 +40,7 @@ struct Material {
 		specular += m.specular;
 		emission += m.emission;
 		shininess += m.shininess;
+		return *this;
 	}
 
 	friend Material operator * (const GLfloat s, const Material& m)
