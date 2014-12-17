@@ -35,6 +35,8 @@ public:
 	void RotateLight(AXES axis, const float theta);
 	void TranslateLight(AXES axis, const float distance);
 	void ScaleLight(const float s);
+	void ChangeComponent(const RGB colorComponent, const LIGHT_COMPONENT lightComponent, const float amount);
+	void ResetToWhiteLight();
 	void Draw(Renderer& renderer);
 	~Light();
 };
@@ -122,6 +124,8 @@ public:
 	void removeLight();
 	Light* getActiveLight();
 	void transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount);
+	void changeActiveLightComponent(const RGB colorComponent, const LIGHT_COMPONENT lightComponent, const float amount);
+	void resetActiveLightToWhite();
 	void updateRendererLightSources();
 	//
 	void addModel(Model* model);

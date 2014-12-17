@@ -580,6 +580,24 @@ void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float 
 	updateRendererLightSources();
 }
 
+void Scene::changeActiveLightComponent(const RGB colorComponent, const LIGHT_COMPONENT lightComponent, const float amount) {
+	if (activeLight == -1) {
+		return;
+	}
+	Light* light = lights[activeLight];
+	light->ChangeComponent(colorComponent, lightComponent, amount);
+	updateRendererLightSources();
+}
+
+void Scene::resetActiveLightToWhite() {
+	if (activeLight == -1) {
+		return;
+	}
+	Light* light = lights[activeLight];
+	light->ResetToWhiteLight();
+	updateRendererLightSources();
+}
+
 void Scene::addLightSource(Light* light)
 {
 	lights.push_back(light);
@@ -744,6 +762,50 @@ void Light::ScaleLight(const float s) {
 	world_transform.multiply(rotation);
 	world_transform.multiply(scale);
 	UpdateLightSourcePosition();
+}
+
+void Light::ChangeComponent(const RGB colorComponent, const LIGHT_COMPONENT lightComponent, const float amount) {
+	vec3 colorChange(1.0, 1.0, 1.0);
+	switch (colorComponent) {
+	case R_RGB:
+		colorChange.x = amount;
+		break;
+	case G_RGB:
+		colorChange.y = amount;
+		break;
+	case B_RGB:
+		colorChange.z = amount;
+		break;
+	case ALL_RGB:
+		colorChange.x = amount;
+		colorChange.y = amount;
+		colorChange.z = amount;
+		break;
+	}
+	switch (lightComponent) {
+	case LIGHT_AMBIENT:
+		light_source.ambient *= colorChange;
+		break;
+	case LIGHT_DIFFUSE:
+		light_source.diffuse *= colorChange;
+		break;
+	case LIGHT_SPECULAR:
+		light_source.specular *= colorChange;
+		break;
+	case LIGHT_ALL_COMPONENTS:
+		light_source.ambient *= colorChange;
+		light_source.diffuse *= colorChange;
+		light_source.specular *= colorChange;
+		break;
+	}
+
+}
+
+void Light::ResetToWhiteLight() {
+	static vec3 whiteLight(3.0, 3.0, 3.0);
+	//light_source.ambient = whiteLight;
+	light_source.diffuse = whiteLight;
+	light_source.specular = whiteLight;
 }
 
 void Light::Draw(Renderer& renderer) {

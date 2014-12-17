@@ -11,7 +11,7 @@
 enum MENU_ITEMS {
 	FILE_OPEN = 1, MAIN_DEMO = 1, MAIN_ABOUT = 2, MAIN_FNORMALS,
 	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
-	ADD_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
+	ADD_CAMERA, CHANGE_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
 	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
@@ -49,6 +49,7 @@ float step_scale = 1;
 AXES axis = ALL_AXES;
 FRAMES frame = MODEL;
 CONTROL_TYPES control = CAMERA_CONTROL;
+RGB rgbComponent = ALL_RGB;
 
 //----------------------------------------------------------------------------
 // Callbacks
@@ -75,9 +76,9 @@ void keyboard(unsigned char key, int x, int y)
 		if (control_module)
 		{
 			if (axis == ALL_AXES) {
-			scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_up_step_size);
-			scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_up_step_size);
-			scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_up_step_size);
+				scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_up_step_size);
+				scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_up_step_size);
+				scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_up_step_size);
 			}
 			else {
 				scene->transformActiveModel(frame, SCALE, axis, scale_up_step_size);
@@ -86,14 +87,16 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		else if (control_light)
 		{
-			if (axis == ALL_AXES) {
-				scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_up_step_size);
-				scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_up_step_size);
-				scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_up_step_size);
-			}
-			else {
-				scene->transformActiveLight(frame, SCALE, axis, scale_up_step_size);
-			}
+			//if (axis == ALL_AXES) {
+			//	scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_up_step_size);
+			//	scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_up_step_size);
+			//	scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_up_step_size);
+			//}
+			//else {
+			//	scene->transformActiveLight(frame, SCALE, axis, scale_up_step_size);
+			//}
+			scene->changeActiveLightComponent(rgbComponent, LIGHT_DIFFUSE, 1.1);
+			scene->changeActiveLightComponent(rgbComponent, LIGHT_SPECULAR, 1.1);
 			scene->draw(*renderer);
 		}
 		break;
@@ -101,9 +104,9 @@ void keyboard(unsigned char key, int x, int y)
 		if (control_module)
 		{
 			if (axis == ALL_AXES) {
-			scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_down_step_size);
-			scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_down_step_size);
-			scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_down_step_size);
+				scene->transformActiveModel(MODEL, SCALE, X_AXIS, scale_down_step_size);
+				scene->transformActiveModel(MODEL, SCALE, Y_AXIS, scale_down_step_size);
+				scene->transformActiveModel(MODEL, SCALE, Z_AXIS, scale_down_step_size);
 			}
 			else {
 				scene->transformActiveModel(frame, SCALE, axis, scale_down_step_size);
@@ -112,14 +115,16 @@ void keyboard(unsigned char key, int x, int y)
 		}
 		else if (control_light)
 		{
-			if (axis == ALL_AXES) {
-				scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_down_step_size);
-				scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_down_step_size);
-				scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_down_step_size);
-			}
-			else {
-				scene->transformActiveLight(frame, SCALE, axis, scale_down_step_size);
-			}
+			//if (axis == ALL_AXES) {
+			//	scene->transformActiveLight(MODEL, SCALE, X_AXIS, scale_down_step_size);
+			//	scene->transformActiveLight(MODEL, SCALE, Y_AXIS, scale_down_step_size);
+			//	scene->transformActiveLight(MODEL, SCALE, Z_AXIS, scale_down_step_size);
+			//}
+			//else {
+			//	scene->transformActiveLight(frame, SCALE, axis, scale_down_step_size);
+			//}
+			scene->changeActiveLightComponent(rgbComponent, LIGHT_DIFFUSE, 0.9);
+			scene->changeActiveLightComponent(rgbComponent, LIGHT_SPECULAR, 0.9);
 			scene->draw(*renderer);
 		}
 		break;
@@ -132,17 +137,43 @@ void keyboard(unsigned char key, int x, int y)
 		scene->draw(*renderer);
 		break;
 	case 'm':
+		if (!control_module) {
+			control_module = true;
+			control_light = false;
+		}
 		scene->changeActiveModel();
 		scene->draw(*renderer);
 		break;
 	case 'c':
-		scene->changeActiveCamera();
-		renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
-		renderer->SetEye(scene->getActiveCamera()->eye);
-		scene->draw(*renderer);
+		if (control_module || control_light) {
+			control_module = false;
+			control_light = false;
+		}
+		else {
+			scene->changeActiveCamera();
+			renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+			renderer->SetEye(scene->getActiveCamera()->eye);
+			scene->draw(*renderer);
+		}
+		break;
+	case 'l':
+		if (!control_light) {
+			control_module = false;
+			control_light = true;
+		}
+		else {
+			scene->changeActiveLight();
+			scene->draw(*renderer);
+		}
 		break;
 	case 'a':
 		axis = ALL_AXES;
+		break;
+	case 'r':
+		if (control_light) {
+			scene->resetActiveLightToWhite();
+			scene->draw(*renderer);
+		}
 		break;
 	case 'x':
 		axis = X_AXIS;
@@ -152,6 +183,18 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'z':
 		axis = Z_AXIS;
+		break;
+	case '1':
+		rgbComponent = R_RGB;
+		break;
+	case '2':
+		rgbComponent = G_RGB;
+		break;
+	case '3':
+		rgbComponent = B_RGB;
+		break;
+	case '4':
+		rgbComponent = ALL_RGB;
 		break;
 	}
 }
@@ -536,6 +579,12 @@ void cameraMenu(int id)
 		control_module = false;
 		control_light = false;
 		break;
+	case CHANGE_CAMERA:
+		scene->changeActiveCamera();
+		renderer->AdjustToCameraAspectRatio(scene->getActiveCameraAspectRatio());
+		renderer->SetEye(scene->getActiveCamera()->eye);
+		scene->draw(*renderer);
+		break;
 	case ORTHO:
 		dlg.ctext = "Ortho view Input= left,right,bottom,top,zNear,zFar";
 		if (dlg.DoModal() == IDOK) {
@@ -685,7 +734,7 @@ void initMenu()
 {
 	int menuFile = glutCreateMenu(fileMenu);
 	glutAddMenuEntry("Open module", FILE_OPEN);
-	glutAddMenuEntry("Control active module", CONTROL_MODULE);
+	glutAddMenuEntry("Control active module (m)", CONTROL_MODULE);
 	glutAddMenuEntry("Change active module (m)", CHANGE_MODULE);
 	glutAddMenuEntry("Remove active module", REMOVE_MODULE);
 	glutAddMenuEntry("Transform in model frame", MODEL_FRAME);
@@ -700,7 +749,7 @@ void initMenu()
 	glutAddMenuEntry("Face Normals", MAIN_FNORMALS);
 	glutAddMenuEntry("Vertex Normals", MAIN_VNORMALS);
 	glutAddMenuEntry("Bounding Box", MAIN_BOUNDING_BOX);
-	glutAddMenuEntry("Show or Hide Cameras (c)", MAIN_CAMERAS);
+	glutAddMenuEntry("Show or Hide Cameras", MAIN_CAMERAS);
 	int aMenu = glutCreateMenu(addMenu);
 	glutSetMenu(mMenu);
 	glutAddSubMenu("Primitives", aMenu);
@@ -713,7 +762,8 @@ void initMenu()
 	glutSetMenu(cMenu);
 	glutAddMenuEntry("Add", ADD_CAMERA);
 	glutAddMenuEntry("Remove", REMOVE_CAMERA);
-	glutAddMenuEntry("Control Camera", CONTROL_CAMERA);
+	glutAddMenuEntry("Control Camera (c)", CONTROL_CAMERA);
+	glutAddMenuEntry("Change Camera (c)", CHANGE_CAMERA);
 	glutAddMenuEntry("Ortho", ORTHO);
 	glutAddMenuEntry("Frustum", FRUSTRUM);
 	glutAddMenuEntry("Perspective", PERSPECTIVE);
@@ -729,8 +779,8 @@ void initMenu()
 	glutSetMenu(lMenu);
 	glutAddMenuEntry("Add light source",ADD_LIGHT);
 	glutAddMenuEntry("Remove light source", REMOVE_LIGHT);
-	glutAddMenuEntry("Change light source", CHANGE_LIGHT);
-	glutAddMenuEntry("Control light source", CONTROL_LIGHT);
+	glutAddMenuEntry("Control light source (l)", CONTROL_LIGHT);
+	glutAddMenuEntry("Change light source (l)", CHANGE_LIGHT);
 	int ltMenu = glutCreateMenu(lightType);
 	glutSetMenu(lMenu);
 	glutAddSubMenu("Light source type", ltMenu);
