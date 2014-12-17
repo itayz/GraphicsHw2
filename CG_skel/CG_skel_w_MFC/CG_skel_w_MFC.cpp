@@ -14,7 +14,7 @@ enum MENU_ITEMS {
 	ADD_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
 	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LiGHT,
-	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARRALLEL_SOURCE,
+	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
 	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
 
 
@@ -646,13 +646,13 @@ void lightType(int id)
 {
 	switch (id)
 	{
-	case (PARRALLEL_SOURCE) :
-		scene->getActiveLight()->light_source.sourceType = PARALLEL_LIGHT;
+	case (PARALLEL_SOURCE) :
+		scene->getActiveLight()->ChangeToParallelSource();
 		scene->updateRendererLightSources();
 		scene->draw(*renderer);
 		break;
 	case (POINT_SOURCE) :
-		scene->getActiveLight()->light_source.sourceType = POINT_LIGHT;
+		scene->getActiveLight()->ChangeToPointSource();
 		scene->updateRendererLightSources();
 		scene->draw(*renderer);
 		break;
@@ -735,7 +735,7 @@ void initMenu()
 	glutAddSubMenu("Light source type", ltMenu);
 	glutSetMenu(ltMenu);
 	glutAddMenuEntry("Point source light", POINT_SOURCE);
-	glutAddMenuEntry("Parrallel source light", PARRALLEL_SOURCE);
+	glutAddMenuEntry("Parallel source light", PARALLEL_SOURCE);
 	int lcMenu = glutCreateMenu(lightColor);
 	glutSetMenu(lMenu);
 	glutAddSubMenu("Light source color", lcMenu);

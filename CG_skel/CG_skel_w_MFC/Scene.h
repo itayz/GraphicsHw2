@@ -17,13 +17,24 @@ class Light {
 	vector<vec3> modelPointLight;
 	vector<vec3> modelParallelLight;
 	ModelMaterial material;
+	mat4 rotation;
+	mat4 translation;
+	mat4 scale;
+	
+	mat4 world_transform;
 
+	void UpdateLightSourcePosition();
 
 public:
 	LightSource light_source;
 
 	Light();
 	vec4 GetPoisition();
+	void ChangeToPointSource();
+	void ChangeToParallelSource();
+	void RotateLight(AXES axis, const float theta);
+	void TranslateLight(AXES axis, const float distance);
+	void ScaleLight(const float s);
 	void Draw(Renderer& renderer);
 	~Light();
 };

@@ -610,12 +610,6 @@ vec3 v[4] = {
 	vec3(0.816497, -0.471405, -0.333333)
 };
 
-inline void Triangle(vector<vec3>& model, const vec3& p1, const vec3& p2, const vec3& p3) {
-	model.push_back(p1);
-	model.push_back(p2);
-	model.push_back(p3);
-}
-
 void DivideTriangle(vector<vec3>& model, const vec3& a, const vec3& b, const vec3& c, int n) {
 	vec3 v1, v2, v3;
 	if (n > 0) {
@@ -628,18 +622,18 @@ void DivideTriangle(vector<vec3>& model, const vec3& a, const vec3& b, const vec
 		DivideTriangle(model, v1, v2, v3, n - 1);
 	}
 	else {
-		Triangle(model, a, b, c);
+		AddMesh(model, a, b, c);
 	}
 }
 
-void Tetrahedron(vector<vec3>& model, int n) {
+void CreateTetrahedron(vector<vec3>& model, int n) {
 	DivideTriangle(model, v[0], v[1], v[2], n);
 	DivideTriangle(model, v[3], v[2], v[1], n);
 	DivideTriangle(model, v[0], v[3], v[1], n);
 	DivideTriangle(model, v[0], v[2], v[3], n);
 }
 
-void CreateArrowToPositiveY(vector<vec3>& model, int height) {
+void CreateArrowToPositiveY(vector<vec3>& model, int height, float scale = 0.5) {
 	if (height <= 3) {
 		throw exception("The arrow height must be bigger than 3");
 	}
@@ -656,6 +650,20 @@ void CreateArrowToPositiveY(vector<vec3>& model, int height) {
 	vec3 p11(-1, height-2, -1);
 	vec3 p12(-1, height-2, 1);
 	vec3 p13(0, height, 0);
+
+	p1 *= scale;
+	p2 *= scale;
+	p3 *= scale;
+	p4 *= scale;
+	p5 *= scale;
+	p6 *= scale;
+	p7 *= scale;
+	p8 *= scale;
+	p9 *= scale;
+	p10 *= scale;
+	p11 *= scale;
+	p12 *= scale;
+	p13 *= scale;
 
 	AddMesh(model, p1, p3, p2);
 	AddMesh(model, p1, p4, p3);
@@ -682,13 +690,81 @@ void CreateArrowToPositiveY(vector<vec3>& model, int height) {
 }
 
 Light::Light() {
-	Tetrahedron(modelPointLight, 3);
+	CreateTetrahedron(modelPointLight, 3);
 	CreateArrowToPositiveY(modelParallelLight, 6);
+	ChangeToParallelSource();
+	ScaleLight(0.5);
 	material.materials[0].emission = vec3(0.5, 0.5, 0.5);
 }
 
+void Light::UpdateLightSourcePosition() {
+	static const vec4 positiveY(0, 1, 0, 1);
+	static const vec4 origin(0, 0, 0, 1);
+	if (light_source.sourceType == POINT_LIGHT) {
+		light_source.position = translation * origin;
+	}
+	else if (light_source.sourceType == PARALLEL_LIGHT) {
+		light_source.position = rotation * positiveY;
+	}
+}
+
+void Light::ChangeToPointSource() {
+	light_source.sourceType = POINT_LIGHT;
+	UpdateLightSourcePosition();
+}
+
+void Light::ChangeToParallelSource() {
+	light_source.sourceType = PARALLEL_LIGHT;
+	UpdateLightSourcePosition();
+}
+
+void Light::RotateLight(AXES axis, const float theta) {
+	switch (axis) {
+	case X_AXIS:
+		rotation = RotateX(theta) * rotation;
+		break;
+	case Y_AXIS:
+		rotation = RotateY(theta) * rotation;
+		break;
+	case Z_AXIS:
+		rotation = RotateZ(theta) * rotation;
+		break;
+	}
+	world_transform = translation;
+	world_transform.multiply(rotation);
+	world_transform.multiply(scale);
+	UpdateLightSourcePosition();
+}
+
+void Light::TranslateLight(AXES axis, const float distance) {
+	switch (axis) {
+	case X_AXIS:
+		translation = Translate(vec4(distance, 0, 0, 1)) * translation;
+		break;
+	case Y_AXIS:
+		translation = Translate(vec4(0, distance, 0, 1)) * translation;
+		break;
+	case Z_AXIS:
+		translation = Translate(vec4(0, 0, distance, 1)) * translation;
+		break;
+	}
+	world_transform = translation;
+	world_transform.multiply(rotation);
+	world_transform.multiply(scale);
+	UpdateLightSourcePosition();
+}
+
+void Light::ScaleLight(const float s) {
+	scale.multiply(Scale(s, s, s));
+	world_transform = translation;
+	world_transform.multiply(rotation);
+	world_transform.multiply(scale);
+	UpdateLightSourcePosition();
+}
+
 void Light::Draw(Renderer& renderer) {
-	renderer.SetObjectMatrices(Translate(light_source.position), mat3(1.0));
+	static const mat3 normal_transform(1.0);
+	renderer.SetObjectMatrices(world_transform, normal_transform);
 	switch (light_source.sourceType) {
 	case POINT_LIGHT:
 		renderer.DrawTriangles(&modelPointLight, NULL, NULL, CYAN, &material);
