@@ -5,6 +5,7 @@
 using std::string;
 
 #include "vec.h"
+#include "Material.h"
 
 // ------------------------
 //    Class CInputDialog
@@ -108,4 +109,51 @@ protected:
     afx_msg int OnCreate (LPCREATESTRUCT lpcs);
     afx_msg void OnPaint();
     DECLARE_MESSAGE_MAP()
+};
+
+
+class CMaterialDialog : public CInputDialog
+{
+public:
+	CMaterialDialog(CString title = "Material Input Dialog");
+	virtual ~CMaterialDialog();
+
+	Material GetMaterial();
+	void SetMaterial(const Material& material);
+
+protected:
+	float ambientR;
+	float ambientG;
+	float ambientB;
+	float diffuseR;
+	float diffuseG;
+	float diffuseB;
+	float specularR;
+	float specularG;
+	float specularB;
+	float emissionR;
+	float emissionG;
+	float emissionB;
+	float shininess;
+
+	CEdit mAmbientR;
+	CEdit mAmbientG;
+	CEdit mAmbientB;
+	CEdit mDiffuseR;
+	CEdit mDiffuseG;
+	CEdit mDiffuseB;
+	CEdit mSpecularR;
+	CEdit mSpecularG;
+	CEdit mSpecularB;
+	CEdit mEmissionR;
+	CEdit mEmissionG;
+	CEdit mEmissionB;
+	CEdit mShininess;
+	Material mMaterial;
+
+	virtual void DoDataExchange(CDataExchange* pDX);
+
+	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
+	afx_msg void OnPaint();
+	DECLARE_MESSAGE_MAP()
 };

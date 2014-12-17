@@ -503,6 +503,28 @@ void Scene::scaleActiveModel(vec3 s)
 	model->_normal_transform = inverseScale * model->_normal_transform;
 }
 
+const Material& Scene::getActiveModelMaterial()
+{
+	static const Material defaultMaterial = Material(vec3(0.33f, 0.22f, 0.03f), vec3(0.78f, 0.57f, 0.11f), vec3(0.99f, 0.91f, 0.81f), vec3(0.0f, 0.0f, 0.0f), 27.8f);
+	if (activeModel == -1) {
+		return defaultMaterial;
+	}
+	MeshModel* model = (MeshModel*)models[activeModel];
+	return model->getModelMaterial().materials[0];
+}
+
+void Scene::setActiveModelMaterial(const Material& material)
+{
+	if (activeModel == -1) {
+		return;
+	}
+	MeshModel* model = (MeshModel*)models[activeModel];
+	ModelMaterial& activeModelMaterial = model->getModelMaterial();
+	activeModelMaterial.materials[0] = material;
+	activeModelMaterial.materials[1] = material;
+	activeModelMaterial.materials[2] = material;
+}
+
 Camera* Scene::getActiveCamera()
 {
 	return cameras.at(activeCamera);

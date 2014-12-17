@@ -137,6 +137,8 @@ public:
 	void focusCameraOnActiveModel();
 	void transformActiveModel(FRAMES frame, ACTIONS action, AXES axis, float amount);
 	void scaleActiveModel(vec3 p);
+	const Material& getActiveModelMaterial();
+	void setActiveModelMaterial(const Material& material);
 	void addCamera(Camera* camera); //adds camera
 	MeshModel* getActiveModel();
 	void removeCamera();
