@@ -13,7 +13,7 @@ enum MENU_ITEMS {
 	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
 	ADD_CAMERA, CHANGE_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
-	CHANGE_MODULE,REMOVE_MODULE,CHANGE_UNIFORM_MATERIAL,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
+	CHANGE_MODULE,REMOVE_MODULE,CHANGE_UNIFORM_MATERIAL,CHANGE_LIGHT_PARAMETERS,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
 	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
 
@@ -679,6 +679,16 @@ void lightMenu(int id)
 		control_module = false;
 		control_light = true;
 		break;
+	case CHANGE_LIGHT_PARAMETERS:
+		CLightSourceDialog lDlg;
+		const LightSource& activeLightSource = scene->getActiveLightSource();
+		lDlg.SetLightSource(activeLightSource);
+		if (lDlg.DoModal() == IDOK) {
+			LightSource newLightSource = lDlg.GetLightSource();
+			scene->setActiveLightSource(newLightSource);
+			scene->draw(*renderer);
+		}
+		break;
 	}
 
 }
@@ -792,6 +802,7 @@ void initMenu()
 	glutAddMenuEntry("Remove light source", REMOVE_LIGHT);
 	glutAddMenuEntry("Control light source (l)", CONTROL_LIGHT);
 	glutAddMenuEntry("Change light source (l)", CHANGE_LIGHT);
+	glutAddMenuEntry("Change light source parameters", CHANGE_LIGHT_PARAMETERS);
 	int ltMenu = glutCreateMenu(lightType);
 	glutSetMenu(lMenu);
 	glutAddSubMenu("Light source type", ltMenu);

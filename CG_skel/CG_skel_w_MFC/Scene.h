@@ -127,6 +127,8 @@ public:
 	void changeActiveLightComponent(const RGB colorComponent, const LIGHT_COMPONENT lightComponent, const float amount);
 	void resetActiveLightToWhite();
 	void updateRendererLightSources();
+	const LightSource& getActiveLightSource();
+	void setActiveLightSource(const LightSource& lightSource);
 	//
 	void addModel(Model* model);
 	float getActiveCameraAspectRatio();

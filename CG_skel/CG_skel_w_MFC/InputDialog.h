@@ -6,6 +6,7 @@ using std::string;
 
 #include "vec.h"
 #include "Material.h"
+#include "LightSource.h"
 
 // ------------------------
 //    Class CInputDialog
@@ -136,6 +137,34 @@ protected:
 	CEdit mEmissionB;
 	CEdit mShininess;
 	Material mMaterial;
+
+	virtual void DoDataExchange(CDataExchange* pDX);
+
+	afx_msg int OnCreate(LPCREATESTRUCT lpcs);
+	afx_msg void OnPaint();
+	DECLARE_MESSAGE_MAP()
+};
+
+class CLightSourceDialog : public CInputDialog
+{
+public:
+	CLightSourceDialog(CString title = "Light Input Dialog");
+	virtual ~CLightSourceDialog();
+
+	LightSource GetLightSource();
+	void SetLightSource(const LightSource& lightSource);
+
+protected:
+	CEdit mAmbientR;
+	CEdit mAmbientG;
+	CEdit mAmbientB;
+	CEdit mDiffuseR;
+	CEdit mDiffuseG;
+	CEdit mDiffuseB;
+	CEdit mSpecularR;
+	CEdit mSpecularG;
+	CEdit mSpecularB;
+	LightSource mLightSource;
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 

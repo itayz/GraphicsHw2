@@ -620,6 +620,26 @@ void Scene::resetActiveLightToWhite() {
 	updateRendererLightSources();
 }
 
+const LightSource& Scene::getActiveLightSource()
+{
+	static const LightSource defaultLightSource;
+	if (activeLight == -1) {
+		return defaultLightSource;
+	}
+	Light* light = lights[activeLight];
+	return light->light_source;
+}
+
+void Scene::setActiveLightSource(const LightSource& lightSource)
+{
+	if (activeLight == -1) {
+		return;
+	}
+	Light* light = lights[activeLight];
+	light->light_source = lightSource;
+	updateRendererLightSources();
+}
+
 void Scene::addLightSource(Light* light)
 {
 	lights.push_back(light);

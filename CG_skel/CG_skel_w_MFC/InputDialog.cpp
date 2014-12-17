@@ -352,3 +352,105 @@ void CMaterialDialog::OnPaint()
 
 	mAmbientR.SetFocus();
 }
+
+
+CLightSourceDialog::CLightSourceDialog(CString title) : CInputDialog(title) {}
+
+CLightSourceDialog::~CLightSourceDialog() {}
+
+LightSource CLightSourceDialog::GetLightSource()
+{
+	return mLightSource;
+}
+
+void CLightSourceDialog::SetLightSource(const LightSource& lightSource)
+{
+	mLightSource = lightSource;
+}
+
+void CLightSourceDialog::DoDataExchange(CDataExchange* pDX)
+{
+	CInputDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, 1, mLightSource.ambient.x);
+	DDX_Text(pDX, 2, mLightSource.ambient.y);
+	DDX_Text(pDX, 3, mLightSource.ambient.z);
+	DDX_Text(pDX, 4, mLightSource.diffuse.x);
+	DDX_Text(pDX, 5, mLightSource.diffuse.y);
+	DDX_Text(pDX, 6, mLightSource.diffuse.z);
+	DDX_Text(pDX, 7, mLightSource.specular.x);
+	DDX_Text(pDX, 8, mLightSource.specular.y);
+	DDX_Text(pDX, 9, mLightSource.specular.z);
+}
+
+// CCmdDialog message handlers
+BEGIN_MESSAGE_MAP(CLightSourceDialog, CInputDialog)
+	ON_WM_CREATE()
+	ON_WM_PAINT()
+END_MESSAGE_MAP()
+
+int CLightSourceDialog::OnCreate(LPCREATESTRUCT lpcs)
+{
+	int ambientTop = 18;
+	mAmbientR.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(115, ambientTop, 185, ambientTop + 20), this, 1);
+	mAmbientG.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(220, ambientTop, 290, ambientTop + 20), this, 2);
+	mAmbientB.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(325, ambientTop, 395, ambientTop + 20), this, 3);
+
+	int diffuseTop = 58;
+	mDiffuseR.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(115, diffuseTop, 185, diffuseTop + 20), this, 4);
+	mDiffuseG.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(220, diffuseTop, 290, diffuseTop + 20), this, 5);
+	mDiffuseB.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(325, diffuseTop, 395, diffuseTop + 20), this, 6);
+
+	int specularTop = 98;
+	mSpecularR.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(115, specularTop, 185, specularTop + 20), this, 7);
+	mSpecularG.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(220, specularTop, 290, specularTop + 20), this, 8);
+	mSpecularB.Create(ES_MULTILINE | WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER,
+		CRect(325, specularTop, 395, specularTop + 20), this, 9);
+
+	return 0;
+}
+
+void CLightSourceDialog::OnPaint()
+{
+	CPaintDC dc(this);
+	dc.SetBkMode(TRANSPARENT);
+
+	int ambientTop = 20;
+	CRect ambient_rect(10, ambientTop, 80, ambientTop + 18);
+	dc.DrawText(CString("Ambient:"), -1, &ambient_rect, DT_SINGLELINE);
+	CRect ambient_r_rect(90, ambientTop, 110, ambientTop + 18);
+	dc.DrawText(CString("R ="), -1, &ambient_r_rect, DT_SINGLELINE);
+	CRect ambient_g_rect(195, ambientTop, 215, ambientTop + 18);
+	dc.DrawText(CString("G ="), -1, &ambient_g_rect, DT_SINGLELINE);
+	CRect ambient_b_rect(300, ambientTop, 320, ambientTop + 18);
+	dc.DrawText(CString("B ="), -1, &ambient_b_rect, DT_SINGLELINE);
+
+	int diffuseTop = 60;
+	CRect diffuse_rect(10, diffuseTop, 80, diffuseTop + 18);
+	dc.DrawText(CString("Diffuse:"), -1, &diffuse_rect, DT_SINGLELINE);
+	CRect diffuse_r_rect(90, diffuseTop, 110, diffuseTop + 18);
+	dc.DrawText(CString("R ="), -1, &diffuse_r_rect, DT_SINGLELINE);
+	CRect diffuse_g_rect(195, diffuseTop, 215, diffuseTop + 18);
+	dc.DrawText(CString("G ="), -1, &diffuse_g_rect, DT_SINGLELINE);
+	CRect diffuse_b_rect(300, diffuseTop, 320, diffuseTop + 18);
+	dc.DrawText(CString("B ="), -1, &diffuse_b_rect, DT_SINGLELINE);
+
+	int specularTop = 100;
+	CRect specular_rect(10, specularTop, 80, specularTop + 18);
+	dc.DrawText(CString("Specular:"), -1, &specular_rect, DT_SINGLELINE);
+	CRect specular_r_rect(90, specularTop, 110, specularTop + 18);
+	dc.DrawText(CString("R ="), -1, &specular_r_rect, DT_SINGLELINE);
+	CRect specular_g_rect(195, specularTop, 215, specularTop + 18);
+	dc.DrawText(CString("G ="), -1, &specular_g_rect, DT_SINGLELINE);
+	CRect specular_b_rect(300, specularTop, 320, specularTop + 18);
+	dc.DrawText(CString("B ="), -1, &specular_b_rect, DT_SINGLELINE);
+
+	mAmbientR.SetFocus();
+}
