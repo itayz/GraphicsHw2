@@ -122,20 +122,6 @@ public:
 	void SetMaterial(const Material& material);
 
 protected:
-	float ambientR;
-	float ambientG;
-	float ambientB;
-	float diffuseR;
-	float diffuseG;
-	float diffuseB;
-	float specularR;
-	float specularG;
-	float specularB;
-	float emissionR;
-	float emissionG;
-	float emissionB;
-	float shininess;
-
 	CEdit mAmbientR;
 	CEdit mAmbientG;
 	CEdit mAmbientB;
