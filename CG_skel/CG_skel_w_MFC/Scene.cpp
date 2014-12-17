@@ -639,8 +639,52 @@ void Tetrahedron(vector<vec3>& model, int n) {
 	DivideTriangle(model, v[0], v[2], v[3], n);
 }
 
+void CreateArrowToPositiveY(vector<vec3>& model, int height) {
+	if (height <= 3) {
+		throw exception("The arrow height must be bigger than 3");
+	}
+	vec3 p1(0.5, 0, 0.5);
+	vec3 p2(0.5, 0, -0.5);
+	vec3 p3(-0.5, 0, -0.5);
+	vec3 p4(-0.5, 0, 0.5);
+	vec3 p5(0.5, height-2, 0.5);
+	vec3 p6(0.5, height-2, -0.5);
+	vec3 p7(-0.5, height-2, -0.5);
+	vec3 p8(-0.5, height-2, 0.5);
+	vec3 p9(1, height-2, 1);
+	vec3 p10(1, height-2, -1);
+	vec3 p11(-1, height-2, -1);
+	vec3 p12(-1, height-2, 1);
+	vec3 p13(0, height, 0);
+
+	AddMesh(model, p1, p3, p2);
+	AddMesh(model, p1, p4, p3);
+	AddMesh(model, p1, p2, p5);
+	AddMesh(model, p2, p6, p5);
+	AddMesh(model, p4, p1, p8);
+	AddMesh(model, p1, p5, p8);
+	AddMesh(model, p3, p4, p7);
+	AddMesh(model, p4, p8, p7);
+	AddMesh(model, p2, p3, p6);
+	AddMesh(model, p3, p7, p6);
+	AddMesh(model, p5, p9, p12);
+	AddMesh(model, p5, p12, p8);
+	AddMesh(model, p11, p8, p12);
+	AddMesh(model, p11, p7, p8);
+	AddMesh(model, p11, p10, p7);
+	AddMesh(model, p7, p10, p6);
+	AddMesh(model, p10, p9, p6);
+	AddMesh(model, p5, p6, p9);
+	AddMesh(model, p13, p12, p9);
+	AddMesh(model, p13, p11, p12);
+	AddMesh(model, p13, p10, p11);
+	AddMesh(model, p13, p9, p10);
+}
+
 Light::Light() {
 	Tetrahedron(modelPointLight, 3);
+	CreateArrowToPositiveY(modelParallelLight, 6);
+	material.materials[0].emission = vec3(0.5, 0.5, 0.5);
 }
 
 void Light::Draw(Renderer& renderer) {
