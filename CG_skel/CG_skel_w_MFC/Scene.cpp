@@ -562,38 +562,22 @@ Light* Scene::getActiveLight()
 
 void Scene::transformActiveLight(FRAMES frame, ACTIONS action, AXES axis, float amount)
 {
-	/*if (activeLight == -1 || (frame != MODEL && frame != WORLD)) {
+	if (activeLight == -1) {
 		return;
 	}
-	LightSource* model = lights[activeLight];
-	vec4 v(0, 0, 0, 1);
+	Light* light = lights[activeLight];
 	switch (action) {
 	case ROTATE:
-		if (frame == MODEL) {
-			v = model->_world_transform * v;
-			model->_world_transform = Translate(-v) * model->_world_transform;
-		}
-		rotateModel(model, axis, amount);
-		if (frame == MODEL) {
-			model->_world_transform = Translate(v) * model->_world_transform;
-		}
+		light->RotateLight(axis, amount);
 		break;
 	case TRANSLATE:
-		if (frame == WORLD) {
-			translateModel(model, axis, amount);
-		}
+		light->TranslateLight(axis, amount);
 		break;
 	case SCALE:
-		if (frame == MODEL) {
-			v = model->_world_transform * v;
-			model->_world_transform = Translate(-v) * model->_world_transform;
-		}
-		scaleModel(model, axis, amount);
-		if (frame == MODEL) {
-			model->_world_transform = Translate(v) * model->_world_transform;
-		}
+		light->ScaleLight(amount);
 		break;
-	}*/
+	}
+	updateRendererLightSources();
 }
 
 void Scene::addLightSource(Light* light)

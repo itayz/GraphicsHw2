@@ -13,7 +13,7 @@ enum MENU_ITEMS {
 	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
 	ADD_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
-	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LiGHT,
+	CHANGE_MODULE,REMOVE_MODULE,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
 	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
 
@@ -48,6 +48,7 @@ float translate_camera_step_size = 0.5;
 float step_scale = 1; 
 AXES axis = ALL_AXES;
 FRAMES frame = MODEL;
+CONTROL_TYPES control = CAMERA_CONTROL;
 
 //----------------------------------------------------------------------------
 // Callbacks
@@ -373,7 +374,7 @@ void motion(int x, int y)
 					}
 					else 
 					{
-							scene->transformActiveModel(frame, ROTATE, axis, dx * rotate_step_size);
+						scene->transformActiveModel(frame, ROTATE, axis, dx * rotate_step_size);
 					}
 					change = true;
 				}
@@ -607,7 +608,7 @@ void lightMenu(int id)
 		scene->addLightSource(l); //add to scene
 		scene->draw(*renderer);
 		break;
-	case (REMOVE_LiGHT) :
+	case (REMOVE_LIGHT) :
 		scene->removeLight();
 		scene->draw(*renderer);
 		break;
@@ -727,7 +728,7 @@ void initMenu()
 	glutAddSubMenu("Light", lMenu);
 	glutSetMenu(lMenu);
 	glutAddMenuEntry("Add light source",ADD_LIGHT);
-	glutAddMenuEntry("Remove light source", REMOVE_LiGHT);
+	glutAddMenuEntry("Remove light source", REMOVE_LIGHT);
 	glutAddMenuEntry("Change light source", CHANGE_LIGHT);
 	glutAddMenuEntry("Control light source", CONTROL_LIGHT);
 	int ltMenu = glutCreateMenu(lightType);
