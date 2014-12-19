@@ -328,8 +328,12 @@ void Renderer::ClearDepthBuffer() {
 
 void NonUniformMaterial(const vec3& normal, Material& material)
 {
-	material.ambient = normal;
-	material.diffuse = normal;
+	static vec3 n;
+	n.x = abs(normal.x);
+	n.y = abs(normal.y);
+	n.z = abs(normal.z);
+	material.ambient = n;
+	material.diffuse = n;
 	material.diffuse *= 2;
 	material.specular = material.diffuse;
 	material.shininess = 20;
