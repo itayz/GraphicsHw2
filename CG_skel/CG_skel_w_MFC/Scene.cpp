@@ -525,6 +525,15 @@ void Scene::setActiveModelMaterial(const Material& material)
 	activeModelMaterial.materials[2] = material;
 }
 
+void Scene::toggleActiveModelUniformMaterial()
+{
+	if (activeModel == -1) {
+		return;
+	}
+	MeshModel* model = (MeshModel*)models[activeModel];
+	model->getModelMaterial().uniform = !(model->getModelMaterial().uniform);
+}
+
 Camera* Scene::getActiveCamera()
 {
 	return cameras.at(activeCamera);

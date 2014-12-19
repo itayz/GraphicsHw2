@@ -12,7 +12,7 @@ enum MENU_ITEMS {
 	FILE_OPEN = 1, MAIN_DEMO = 1, MAIN_ABOUT = 2, MAIN_FNORMALS,
 	MAIN_VNORMALS, MAIN_BOUNDING_BOX, MAIN_CAMERAS, PRIMITIVE_PYRAMID,
 	ADD_CAMERA, CHANGE_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
-	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,
+	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,TOGGLE_UNIFORM_MATERIAL,
 	CHANGE_MODULE,REMOVE_MODULE,CHANGE_UNIFORM_MATERIAL,CHANGE_LIGHT_PARAMETERS,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
 	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
 	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
@@ -492,6 +492,10 @@ void fileMenu(int id)
 	case REMOVE_MODULE:
 		scene->removeModel();
 		break;
+	case TOGGLE_UNIFORM_MATERIAL:
+		scene->toggleActiveModelUniformMaterial();
+		scene->draw(*renderer);
+		break;
 	case CHANGE_UNIFORM_MATERIAL:
 		CMaterialDialog mDlg;
 		const Material& activeModelMaterial = scene->getActiveModelMaterial();
@@ -760,6 +764,7 @@ void initMenu()
 	glutAddMenuEntry("Transform in model frame", MODEL_FRAME);
 	glutAddMenuEntry("Transform in world frame", WORLD_FRAME);
 	glutAddMenuEntry("Change uniform material", CHANGE_UNIFORM_MATERIAL);
+	glutAddMenuEntry("Toggle uniform / non uniform material", TOGGLE_UNIFORM_MATERIAL);
 	int mMenu = glutCreateMenu(mainMenu);
 	glutAddSubMenu("Module", menuFile);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);

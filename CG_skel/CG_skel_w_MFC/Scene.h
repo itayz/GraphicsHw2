@@ -141,6 +141,7 @@ public:
 	void scaleActiveModel(vec3 p);
 	const Material& getActiveModelMaterial();
 	void setActiveModelMaterial(const Material& material);
+	void toggleActiveModelUniformMaterial();
 	void addCamera(Camera* camera); //adds camera
 	MeshModel* getActiveModel();
 	void removeCamera();

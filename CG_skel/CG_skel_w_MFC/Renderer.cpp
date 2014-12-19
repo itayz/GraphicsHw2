@@ -326,6 +326,15 @@ void Renderer::ClearDepthBuffer() {
 	}
 }
 
+void NonUniformMaterial(const vec3& normal, Material& material)
+{
+	material.ambient = normal;
+	material.diffuse = normal;
+	material.diffuse *= 2;
+	material.specular = material.diffuse;
+	material.shininess = 20;
+}
+
 void Renderer::ShadingColor(const vec3& p, const vec3& eye, const vec3& n, const Material& material, vec4& color)
 {
 	vec3 v = eye;
@@ -408,6 +417,7 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 	// Draw all the triangles
 	static vec4 pixelColor = vec4(0.5, 0.9, 0.9, 1);
 	static vec4 uColor, vColor, wColor;
+	static Material nonUniformMaterial;
 	switch (color) {
 	case WHITE:
 		pixelColor = { 1, 1, 1, 1 };
@@ -456,7 +466,13 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				avgPosition += w3;
 				avgPosition /= 3;
 				vec3 normal = normalize(cross(w3 - w2, w1 - w2));
-				ShadingColor(avgPosition, eye, normal, material->materials[0], pixelColor);
+				if (material->uniform) {
+					ShadingColor(avgPosition, eye, normal, material->materials[0], pixelColor);
+				}
+				else {
+					NonUniformMaterial(normal, nonUniformMaterial);
+					ShadingColor(avgPosition, eye, normal, nonUniformMaterial, pixelColor);
+				}
 			}
 			x1 = p1[0];
 			y1 = p1[1];
@@ -470,9 +486,19 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				vec3 n1 = nTransform * (*v_normals)[i];
 				vec3 n2 = nTransform * (*v_normals)[i + 1];
 				vec3 n3 = nTransform * (*v_normals)[i + 2];
-				ShadingColor(w1, eye, n1, material->materials[0], uColor);
-				ShadingColor(w2, eye, n2, material->materials[1], vColor);
-				ShadingColor(w3, eye, n3, material->materials[2], wColor);
+				if (material->uniform) {
+					ShadingColor(w1, eye, n1, material->materials[0], uColor);
+					ShadingColor(w2, eye, n2, material->materials[0], vColor);
+					ShadingColor(w3, eye, n3, material->materials[0], wColor);
+				}
+				else {
+					NonUniformMaterial(n1, nonUniformMaterial);
+					ShadingColor(w1, eye, n1, nonUniformMaterial, uColor);
+					NonUniformMaterial(n2, nonUniformMaterial);
+					ShadingColor(w2, eye, n2, nonUniformMaterial, vColor);
+					NonUniformMaterial(n3, nonUniformMaterial);
+					ShadingColor(w3, eye, n3, nonUniformMaterial, wColor);
+				}
 				for (int y = scanLines.yMin; y <= scanLines.yMax; ++y) {
 					for (int x = scanLines.xLimits[2 * y]; x <= scanLines.xLimits[2 * y + 1]; ++x) {
 						triangle.Barycentric(x, y, weights);
@@ -511,11 +537,8 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 							ShadingColor(point, eye, pointNormal, material->materials[0], pixelColor);
 						}
 						else {
-							Material avgMaterial = material->materials[0];
-							avgMaterial *= weights.x;
-							avgMaterial += material->materials[1] * weights.y;
-							avgMaterial += material->materials[2] * weights.z;
-							ShadingColor(point, eye, pointNormal, avgMaterial, pixelColor);
+							NonUniformMaterial(pointNormal, nonUniformMaterial);
+							ShadingColor(point, eye, pointNormal, nonUniformMaterial, pixelColor);
 						}
 						DrawPixel(x, y, z, pixelColor);
 					}
