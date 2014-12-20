@@ -440,14 +440,17 @@ void Scene::rotateModel(MeshModel *model, AXES axis, float theta)
 	case X_AXIS:
 		model->_world_transform = RotateX(theta) * model->_world_transform;
 		model->_normal_transform = transpose(RotateXmat3(-theta)) * model->_normal_transform;
+		model->_normal_transform /= pow(model->_normal_transform.det(), 0.333333f);
 		break;
 	case Y_AXIS:
 		model->_world_transform = RotateY(theta) * model->_world_transform;
 		model->_normal_transform = transpose(RotateYmat3(-theta)) * model->_normal_transform;
+		model->_normal_transform /= pow(model->_normal_transform.det(), 0.333333f);
 		break;
 	case Z_AXIS:
 		model->_world_transform = RotateZ(theta) * model->_world_transform;
 		model->_normal_transform = transpose(RotateZmat3(-theta)) * model->_normal_transform;
+		model->_normal_transform /= pow(model->_normal_transform.det(), 0.333333f);
 		break;
 	}
 }
@@ -487,6 +490,7 @@ void Scene::scaleModel(MeshModel *model, AXES axis, float s)
 	}
 	model->_world_transform = Scale(v) * model->_world_transform;
 	model->_normal_transform = inverseScale * model->_normal_transform;
+	model->_normal_transform /= pow(model->_normal_transform.det(), 0.333333f);
 }
 
 void Scene::scaleActiveModel(vec3 s)
@@ -501,6 +505,7 @@ void Scene::scaleActiveModel(vec3 s)
 	inverseScale[1][1] = 1 / s.y;
 	inverseScale[2][2] = 1 / s.z;
 	model->_normal_transform = inverseScale * model->_normal_transform;
+	model->_normal_transform /= pow(model->_normal_transform.det(), 0.333333f);
 }
 
 const Material& Scene::getActiveModelMaterial()

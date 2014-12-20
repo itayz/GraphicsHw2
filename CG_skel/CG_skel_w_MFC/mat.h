@@ -62,7 +62,7 @@ public:
 
 	mat2 operator * (const GLfloat s) const
 	{
-		return mat2(s*_m[0], s*_m[1]);
+		return mat2(_m[0]*s, _m[1]*s);
 	}
 
 	mat2 operator / (const GLfloat s) const {
@@ -76,16 +76,23 @@ public:
 		return m * s;
 	}
 
-	mat2 operator * (const mat2& m) const {
-		mat2  a(0.0);
-		for (int i = 0; i < 2; ++i) { //row
-			for (int j = 0; j < 2; ++j) { //col
-				for (int k = 0; k < 2; ++k) {
-					a[i][j] += _m[i][k] * m[k][j];
-				}
-			}
+	mat2& multiply(const mat2& m) {
+		GLfloat x, y;
+		for (int i = 0; i < 3; ++i) {
+			x = _m[i].x * m._m[0].x;
+			x += _m[i].y * m._m[1].x;
+
+			y = _m[i].x * m._m[0].y;
+			y += _m[i].y * m._m[1].y;
+
+			_m[i].x = x;
+			_m[i].y = y;
 		}
-		return a;
+		return *this;
+	}
+
+	mat2 operator * (const mat2& m) const {
+		return mat2(*this).multiply(m);
 	}
 
 	//
@@ -108,20 +115,11 @@ public:
 	}
 
 	mat2& operator *= (const mat2& m) {
-		mat2  a(0.0);
-		for (int i = 0; i < 2; ++i) { //row
-			for (int j = 0; j < 2; ++j) { //col
-				for (int k = 0; k < 2; ++k) {
-					a[i][j] += _m[i][k] * m[k][j];
-				}
-			}
-		}
-		return *this = a;
+		this->multiply(m);
+		return *this;
 	}
 
 	mat2& operator /= (const GLfloat s) {
-
-
 		GLfloat r = GLfloat(1.0) / s;
 		return *this *= r;
 	}
@@ -131,8 +129,8 @@ public:
 	//
 
 	vec2 operator * (const vec2& v) const {  // m * v
-		return vec2(_m[0][0] * v.x + _m[0][1] * v.y,
-			_m[1][0] * v.x + _m[1][1] * v.y);
+		return vec2(_m[0].x * v.x + _m[0].y * v.y,
+			_m[1].x * v.x + _m[1].y * v.y);
 	}
 
 	//
@@ -245,12 +243,10 @@ public:
 
 	mat3 operator * (const GLfloat s) const
 	{
-		return mat3(s*_m[0], s*_m[1], s*_m[2]);
+		return mat3(_m[0]*s, _m[1]*s, _m[2]*s);
 	}
 
 	mat3 operator / (const GLfloat s) const {
-
-
 		GLfloat r = GLfloat(1.0) / s;
 		return *this * r;
 	}
@@ -260,18 +256,30 @@ public:
 		return m * s;
 	}
 
-	mat3 operator * (const mat3& m) const {
-		mat3  a(0.0);
+	mat3& multiply(const mat3& m) {
+		GLfloat x, y, z;
+		for (int i = 0; i < 3; ++i) {
+			x = _m[i].x * m._m[0].x;
+			x += _m[i].y * m._m[1].x;
+			x += _m[i].z * m._m[2].x;
 
-		for (int i = 0; i < 3; ++i) { //row
-			for (int j = 0; j < 3; ++j) { //col
-				for (int k = 0; k < 3; ++k) {
-					a[i][j] += _m[i][k] * m[k][j];
-				}
-			}
+			y = _m[i].x * m._m[0].y;
+			y += _m[i].y * m._m[1].y;
+			y += _m[i].z * m._m[2].y;
+
+			z = _m[i].x * m._m[0].z;
+			z += _m[i].y * m._m[1].z;
+			z += _m[i].z * m._m[2].z;
+
+			_m[i].x = x;
+			_m[i].y = y;
+			_m[i].z = z;
 		}
+		return *this;
+	}
 
-		return a;
+	mat3 operator * (const mat3& m) const {
+		return mat3(*this).multiply(m);
 	}
 
 	//
@@ -294,22 +302,11 @@ public:
 	}
 
 	mat3& operator *= (const mat3& m) {
-		mat3  a(0.0);
-
-		for (int i = 0; i < 3; ++i) { //row
-			for (int j = 0; j < 3; ++j) { //col
-				for (int k = 0; k < 3; ++k) {
-					a[i][j] += _m[i][k] * m[k][j];
-				}
-			}
-		}
-
-		return *this = a;
+		this->multiply(m);
+		return *this;
 	}
 
 	mat3& operator /= (const GLfloat s) {
-
-
 		GLfloat r = GLfloat(1.0) / s;
 		return *this *= r;
 	}
@@ -319,9 +316,9 @@ public:
 	//
 
 	vec3 operator * (const vec3& v) const {  // m * v
-		return vec3(_m[0][0] * v.x + _m[0][1] * v.y + _m[0][2] * v.z,
-			_m[1][0] * v.x + _m[1][1] * v.y + _m[1][2] * v.z,
-			_m[2][0] * v.x + _m[2][1] * v.y + _m[2][2] * v.z);
+		return vec3(_m[0].x * v.x + _m[0].y * v.y + _m[0].z * v.z,
+			_m[1].x * v.x + _m[1].y * v.y + _m[1].z * v.z,
+			_m[2].x * v.x + _m[2].y * v.y + _m[2].z * v.z);
 	}
 
 	//
@@ -352,6 +349,13 @@ public:
 	operator GLfloat* ()
 	{
 		return static_cast<GLfloat*>(&_m[0].x);
+	}
+
+	GLfloat det() const
+	{
+		return (_m[0].x * (_m[1].y * _m[2].z - _m[1].z * _m[2].y)
+			- _m[0].y * (_m[1].x * _m[2].z - _m[1].z * _m[2].x)
+			+ _m[0].z * (_m[1].x * _m[2].y - _m[1].y * _m[2].x));
 	}
 };
 
@@ -441,12 +445,10 @@ public:
 
 	mat4 operator * (const GLfloat s) const
 	{
-		return mat4(s*_m[0], s*_m[1], s*_m[2], s*_m[3]);
+		return mat4(_m[0]*s, _m[1]*s, _m[2]*s, _m[3]*s);
 	}
 
 	mat4 operator / (const GLfloat s) const {
-
-
 		GLfloat r = GLfloat(1.0) / s;
 		return *this * r;
 	}
@@ -488,9 +490,7 @@ public:
 	}
 
 	mat4 operator * (const mat4& m) const {
-		mat4  a(*this);
-		a.multiply(m);
-		return a;
+		return mat4(*this).multiply(m);
 	}
 
 	//
@@ -513,22 +513,11 @@ public:
 	}
 
 	mat4& operator *= (const mat4& m) {
-		mat4  a(0.0);
-
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				for (int k = 0; k < 4; ++k) {
-					a[i][j] += _m[i][k] * m[k][j];
-				}
-			}
-		}
-
-		return *this = a;
+		this->multiply(m);
+		return *this;
 	}
 
 	mat4& operator /= (const GLfloat s) {
-
-
 		GLfloat r = GLfloat(1.0) / s;
 		return *this *= r;
 	}
