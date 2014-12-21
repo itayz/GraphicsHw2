@@ -59,9 +59,12 @@ GLfloat Renderer::sumQuadPixels(int x, int y, const int& color) {
 	x *= 2; 
 	y *= 2;
 	k += m_aa_outBuffer[INDEX(m_aa_width, x, y, color)];
-	k += m_aa_outBuffer[INDEX(m_aa_width, x + 1, y, color)];
-	k += m_aa_outBuffer[INDEX(m_aa_width, x, y + 1, color)];
-	k += m_aa_outBuffer[INDEX(m_aa_width, x + 1, y + 1, color)];
+	++x;
+	k += m_aa_outBuffer[INDEX(m_aa_width, x, y, color)];
+	++y;
+	k += m_aa_outBuffer[INDEX(m_aa_width, x, y, color)];
+	--x;
+	k += m_aa_outBuffer[INDEX(m_aa_width, x, y, color)];
 	k /= 4;
 	return k;
 }
@@ -469,13 +472,12 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				avgPosition += w2;
 				avgPosition += w3;
 				avgPosition /= 3;
-				//vec3 normal = normalize(cross(w3 - w2, w1 - w2));
-				vec3 normal = normalize(cross(v3 - v2, v1 - v2));
 				if (material->uniform) {
-					normal = nTransform * normal;
+					vec3 normal = normalize(cross(w3 - w2, w1 - w2));
 					ShadingColor(avgPosition, eye, normal, material->materials[0], pixelColor);
 				}
 				else {
+					vec3 normal = normalize(cross(v3 - v2, v1 - v2));
 					NonUniformMaterial(normal, nonUniformMaterial);
 					normal = nTransform * normal;
 					ShadingColor(avgPosition, eye, normal, nonUniformMaterial, pixelColor);
@@ -490,9 +492,6 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 			CalculateScanLines(x1, y1, x2, y2, x3, y3, scanLines);
 			Triangle2D triangle(x1, y1, x2, y2, x3, y3);
 			if (shadingType == GOURAUD_SHADING && v_normals) {
-				//vec3 n1 = nTransform * (*v_normals)[i];
-				//vec3 n2 = nTransform * (*v_normals)[i + 1];
-				//vec3 n3 = nTransform * (*v_normals)[i + 2];
 				vec3 n1 = (*v_normals)[i];
 				vec3 n2 = (*v_normals)[i + 1];
 				vec3 n3 = (*v_normals)[i + 2];
@@ -530,9 +529,6 @@ void Renderer::DrawTriangles(const vector<vec3>* vertices,
 				}
 			}
 			else if (shadingType == PHONG_SHADING && v_normals) {
-				//vec3 n1 = nTransform * (*v_normals)[i];
-				//vec3 n2 = nTransform * (*v_normals)[i + 1];
-				//vec3 n3 = nTransform * (*v_normals)[i + 2];
 				const vec3 n1 = (*v_normals)[i];
 				const vec3 n2 = (*v_normals)[i + 1];
 				const vec3 n3 = (*v_normals)[i + 2];
@@ -698,6 +694,7 @@ void Renderer::SwapBuffers()
 
 void Renderer::DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color)
 {
+	static const ModelMaterial boundingBoxMaterial;
 	vector<vec3> ver;
 	vector<vec3> b = *bounding_box;
 	GLfloat min_x = b[0].x;
@@ -754,7 +751,7 @@ void Renderer::DrawBoundingBox(const vector<vec3>* bounding_box, COLORS color)
 	ver.push_back(vec3(max_x, min_y, min_z));
 	ver.push_back(vec3(max_x, min_y, min_z));
 	ver.push_back(vec3(max_x, min_y, max_z));
-	this->DrawTriangles(&ver, NULL, NULL, color);
+	this->DrawTriangles(&ver, NULL, NULL, color, &boundingBoxMaterial);
 }
 
 void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
@@ -763,7 +760,7 @@ void Renderer::DrawFaceNormals(const vector<vec3>* f_normals)
 	vec3 p1, p2,norm;
 	vec4 tail, end;
 	GLfloat z = 0;
-	vec4 defaultColor = vec4(1, 0, 0, 1); //red
+	static const vec4 defaultColor = vec4(1, 0, 0, 1); //red
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
@@ -810,7 +807,7 @@ void Renderer::DrawVertexNormals(const vector<vec3>* vertices,const vector<vec3>
 	vec3 norm;
 	vec4 tail, end, p;
 	GLfloat z = 0;
-	vec4 defaultColor = vec4(1, 0, 0, 1);
+	static const vec4 defaultColor = vec4(1, 0, 0, 1);
 	// Build the transform matrix
 	mat4 transform(projection);
 	transform.multiply(viewTransform);
