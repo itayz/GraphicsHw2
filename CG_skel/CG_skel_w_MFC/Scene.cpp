@@ -555,7 +555,12 @@ void Scene::removeCamera()
 
 MeshModel* Scene::getActiveModel()
 {
-	return (MeshModel*) models.at(activeModel);
+	if (models.size()) {
+		return (MeshModel*)models.at(activeModel);
+	}
+	else {
+		return NULL;
+	}
 }
 
 void Scene::removeModel()

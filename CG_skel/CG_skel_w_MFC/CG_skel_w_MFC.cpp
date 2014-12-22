@@ -14,8 +14,8 @@ enum MENU_ITEMS {
 	ADD_CAMERA, CHANGE_CAMERA, FRUSTRUM, ORTHO, PERSPECTIVE, WORLD_GRID, REMOVE_CAMERA,
 	CONTROL_MODULE,CONTROL_CAMERA,STEP_SCALE,WORLD_FRAME,MODEL_FRAME,TOGGLE_UNIFORM_MATERIAL,
 	CHANGE_MODULE,REMOVE_MODULE,CHANGE_UNIFORM_MATERIAL,CHANGE_LIGHT_PARAMETERS,LIGHT_MENU,LIGHT_SOURCE,ADD_LIGHT,REMOVE_LIGHT,
-	CHANGE_LIGHT,CONTROL_LIGHT,LIGHT_COLOR,LIGHT_TYPE,POINT_SOURCE,PARALLEL_SOURCE,
-	LIGHT_WHITE, LIGHT_BLUE, LIGHT_YELLOW,FOG,AA
+	CHANGE_LIGHT,CONTROL_LIGHT,POINT_SOURCE,PARALLEL_SOURCE,
+	FOG,AA
 
 
 
@@ -352,9 +352,12 @@ void motion(int x, int y)
 			{
 				if (abs(dx) < 30) // continuous movement condition
 				{
-					scene->getActiveModel()->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u)) 
-						* scene->getActiveModel()->_world_transform;					
-					change = true;
+					MeshModel* activeModel = scene->getActiveModel();
+					if (activeModel) {
+						activeModel->_world_transform = Translate(0.02*translate_step_size*dx*vec4(scene->getActiveCamera()->u))
+							* activeModel->_world_transform;
+						change = true;
+					}
 				}
 			}
 			else if (control_light) //module control mode.
@@ -381,9 +384,12 @@ void motion(int x, int y)
 			{
 				if (abs(dy) < 30) // continuous movement condition
 				{
-					scene->getActiveModel()->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
-						*scene->getActiveModel()->_world_transform;
-					change = true;
+					MeshModel* activeModel = scene->getActiveModel();
+					if (activeModel) {
+						activeModel->_world_transform = Translate(-0.02*translate_step_size*dy*vec4(scene->getActiveCamera()->v))
+							*activeModel->_world_transform;
+						change = true;
+					}
 				}
 			}
 			else if (control_light)
@@ -697,25 +703,6 @@ void lightMenu(int id)
 
 }
 
-void lightColor(int id)
-{
-	/*switch (id)
-	{
-	case (LIGHT_WHITE) :
-		scene->getActiveLight()->setColor(WHITE);
-		scene->draw(*renderer);
-		break;
-	case (LIGHT_BLUE) :
-		scene->getActiveLight()->setColor(BLUE);
-		scene->draw(*renderer);
-		break;
-	case (LIGHT_YELLOW) :
-		scene->getActiveLight()->setColor(YELLOW);
-		scene->draw(*renderer);
-		break;
-	}*/
-}
-
 void lightType(int id)
 {
 	switch (id)
@@ -814,13 +801,6 @@ void initMenu()
 	glutSetMenu(ltMenu);
 	glutAddMenuEntry("Point source light", POINT_SOURCE);
 	glutAddMenuEntry("Parallel source light", PARALLEL_SOURCE);
-	int lcMenu = glutCreateMenu(lightColor);
-	glutSetMenu(lMenu);
-	glutAddSubMenu("Light source color", lcMenu);
-	glutSetMenu(lcMenu);
-	glutAddMenuEntry("WHITE", LIGHT_WHITE);
-	glutAddMenuEntry("BLUE", LIGHT_BLUE);
-	glutAddMenuEntry("YELLOW", LIGHT_YELLOW);
 	int eMenu = glutCreateMenu(effects);
 	glutSetMenu(mMenu);
 	glutAddSubMenu("Special effects", eMenu);
