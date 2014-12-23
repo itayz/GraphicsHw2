@@ -23,6 +23,7 @@ class Light {
 	
 	mat4 world_transform;
 
+	void AdjustMaterial();
 	void UpdateLightSourcePosition();
 
 public:

@@ -757,7 +757,27 @@ Light::Light() {
 	CreateArrowToPositiveY(modelParallelLight, 6);
 	ChangeToParallelSource();
 	ScaleLight(0.5);
-	material.materials[0].emission = vec3(0.5, 0.5, 0.5);
+	AdjustMaterial();
+}
+
+void Light::AdjustMaterial() {
+	static const vec3 blackColor(0.0, 0.0, 0.0);
+	vec3 totalLight = light_source.ambient;
+	totalLight += light_source.diffuse;
+	totalLight += light_source.specular;
+	float sum = totalLight.x + totalLight.y + totalLight.z;
+	float max = totalLight.x;
+	if (totalLight.y > max) {
+		max = totalLight.y;
+	}
+	if (totalLight.z > max) {
+		max = totalLight.z;
+	}
+	totalLight /= max;
+	material.materials[0].ambient = blackColor;
+	material.materials[0].diffuse = blackColor;
+	material.materials[0].specular = blackColor;
+	material.materials[0].emission = totalLight;
 }
 
 void Light::UpdateLightSourcePosition() {
@@ -859,7 +879,7 @@ void Light::ChangeComponent(const RGB colorComponent, const LIGHT_COMPONENT ligh
 		light_source.specular *= colorChange;
 		break;
 	}
-
+	AdjustMaterial();
 }
 
 void Light::ResetToWhiteLight() {
@@ -867,6 +887,7 @@ void Light::ResetToWhiteLight() {
 	//light_source.ambient = whiteLight;
 	light_source.diffuse = whiteLight;
 	light_source.specular = whiteLight;
+	AdjustMaterial();
 }
 
 void Light::Draw(Renderer& renderer) {
